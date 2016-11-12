@@ -1,0 +1,15 @@
+fatalError: false
+maxTotalPoints: 5
+messages: []
+mode: auto
+parts:
+- description: Basic test for blackjackFeatureExtractor.  Runs QLearningAlgorithm
+    using blackjackFeatureExtractor, then checks to see that Q-values are correct.
+  extraCredit: false
+  maxPoints: 5
+  maxSeconds: 10
+  messages: []
+  name: 4c-basic
+  points: 5
+  seconds: 0
+totalPoints: 5

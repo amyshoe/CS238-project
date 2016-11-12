@@ -1,0 +1,51 @@
+##Cross Validation -------------- problem 8
+
+set.seed(1)
+y = rnorm(100)
+x = rnorm(100)
+y = x - 2*x^2 + rnorm(100)
+
+plot(x,y)
+
+library(ISLR)
+library(boot)
+error_cv = rep(0,5)
+df = data.frame(x,y)
+for (i in 1:5){
+	glm_fit = glm(y~poly(x,i),data= df)
+	error_cv[i] = cv.glm(df,glm_fit)$delta[1]
+}
+print(error_cv)
+
+
+##Regularization ---------------problem 9
+
+m = dim(College)[1]
+test_percent = 0.2
+test_rows = sample(1:m, test_percent *m)
+test_data = College[test_rows,]
+train_data = College[-test_rows,]
+
+
+##least Squares
+glm = lm(Accept ~ .,data= train_data)
+test_pred = predict(glm,newdata = test_data)
+MSE_error = sum((test_pred-test_data$Accept)^2)/length(test_pred)
+
+##Ridge Regression
+library(glmnet)
+tr_data = train_data[,-3]
+tt_data = test_data[,-3]
+ridge_glm = cv.glmnet(data.matrix(tr_data),train_data$Accept,alpha=0)
+bestlam = ridge_glm$lambda.min
+ridge_mod = glmnet(data.matrix(tr_data),train_data$Accept,alpha=0,lambda = bestlam)
+ridge_pred = predict(ridge_mod,newx = data.matrix(tt_data))
+MSE_ridge = sum((ridge_pred - test_data$Accept)^2)/length(ridge_pred)
+
+##Lasso Regression
+lasso_glm = cv.glmnet(data.matrix(tr_data),train_data$Accept,alpha=1)
+bestlam = lasso_glm$lambda.min
+lasso_mod = glmnet(data.matrix(tr_data),train_data$Accept,alpha=1,lambda = bestlam)
+lasso_pred = predict(lasso_mod,newx = data.matrix(tt_data))
+MSE_lasso = sum((lasso_pred - test_data$Accept)^2)/length(lasso_pred)
+

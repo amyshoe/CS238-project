@@ -9,45 +9,45 @@
 import random
 
 class AirplaneSimulator:
-	'''
-	documentation! we'll do it later
-	'''
-	def __init__(self, input_params):
-		'''
-		fill this in yo
-		'''
-		self.state = None
-		self.sigma = 1
-		self.possible_actions = None
-		self.time_step = 1
+    '''
+    documentation! we'll do it later
+    '''
+    def __init__(self, input_params):
+        '''
+        fill this in yo
+        '''
+        self.state = None
+        self.sigma = 1
+        self.possible_actions = None
+        self.time_step = 1
 
-		# Initialize class attributes!
-		self.load_params(input_params)
+        # Initialize class attributes!
+        self.load_params(input_params)
 
-	def load_params(self, input_params):
-		'''
-		doc string! do it later
-		'''
-		# set the attributes!!!!
+    def load_params(self, input_params):
+        '''
+        doc string! do it later
+        '''
+        # set the attributes!!!!
 
-	def update(self, action):
-		'''
-		Updates state according to a given action
-		'''
-		if not action in self.possible_actions:
-			print "Action is not possible."
-			return False
-		y = self.state[0] + (action[0] + 0.01 * (self.state[4]**2)) * self.time_step
-		z = self.state[1] + action[1] * self.time_step
-		v_y = self.state[2] + (action[0] + 0.01 * (self.state[4]**2)) * self.time_step
-		v_z = self.state[3] + action[1] * self.time_step
-		v_w = random.randn(self.state[4], self.sigma)
-		self.state = (y, z, v_y, v_z, v_w)
+    def update(self, action):
+        '''
+        Updates state according to a given action
+        '''
+        if not action in self.possible_actions:
+            print "Action is not possible."
+            return False
+        y = self.state[0] + (action[0] + 0.01 * (self.state[4]**2)) * self.time_step
+        z = self.state[1] + action[1] * self.time_step
+        v_y = self.state[2] + (action[0] + 0.01 * (self.state[4]**2)) * self.time_step
+        v_z = self.state[3] + action[1] * self.time_step
+        v_w = random.randn(self.state[4], self.sigma)
+        self.state = (y, z, v_y, v_z, v_w)
 
-	def get_state(self):
-		''' 
-		Returns current state 
-		'''
-		return self.state
+    def get_state(self):
+        ''' 
+        Returns current state 
+        '''
+        return self.state
 
 

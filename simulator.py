@@ -19,6 +19,7 @@ class AirplaneSimulator:
 		self.state = None
 		self.sigma = 1
 		self.possible_actions = None
+		self.time_step = 1
 
 		# Initialize class attributes!
 		self.load_params(input_params)
@@ -36,10 +37,10 @@ class AirplaneSimulator:
 		if not action in self.possible_actions:
 			print "Action is not possible."
 			return False
-		y = self.state[0] + action[0] + 0.01 * (self.state[4]**2)
-		z = self.state[1] + action[1]
-		v_y = self.state[2] + action[0] + 0.01 * (self.state[4]**2)
-		v_z = self.state[3] + action[1]
+		y = self.state[0] + (action[0] + 0.01 * (self.state[4]**2)) * self.time_step
+		z = self.state[1] + action[1] * self.time_step
+		v_y = self.state[2] + (action[0] + 0.01 * (self.state[4]**2)) * self.time_step
+		v_z = self.state[3] + action[1] * self.time_step
 		v_w = random.randn(self.state[4], self.sigma)
 		self.state = (y, z, v_y, v_z, v_w)
 

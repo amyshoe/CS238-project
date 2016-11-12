@@ -7,5 +7,9 @@
 # update: (y + delta_vy +- 0.01(v_w^2), z + delta_vz, v_y + delta_vy +- 0.01(v_w^2), v_z + delta_vz, N(v_w, sigma))
 # +=- 0.01 * v_w(km/hr)^2 <-- effect on v_y
 
-def update(s, a):
-	next_y = s[0] + s[2] +   
+class AirplaneSimulator:
+
+	def __init__(self,):
+
+	def update(s, a):
+		next_y = s[0] + s[2] +   

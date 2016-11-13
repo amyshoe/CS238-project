@@ -1,5 +1,10 @@
 from const import Const
+import math
 import random
+
+# TODO:  check update formulas in update() function --- Rahul
+# TODO:  decide if we want the log to look nice (i.e., decide on #sigfig convention)
+#        right now it's just full possible precision.
 
 class AirplaneSimulator:
     '''
@@ -10,30 +15,45 @@ class AirplaneSimulator:
         fill this in yo
         '''
         self.time_elapsed = 0
-        self.min_action = [Const.MIN_DELTA_VY, Const.MIN_DELTA_VZ]
-        self.max_action = [Const.MAX_DELTA_VY, Const.MAX_DELTA_VZ]
-        self.min_state = [Const.MIN_Y, Const.MIN_Z, Const.MIN_VY, Const.MIN_VZ, Const.MIN_VW]
-        self.max_state = [Const.MAX_Y, Const.MAX_Z, Const.MAX_VY, Const.MAX_VZ, Const.MAX_VW]
+        self.min_action = [Const.DELTA_VY_MIN, Const.DELTA_VZ_MIN]
+        self.max_action = [Const.DELTA_VY_MAX, Const.DELTA_VZ_MAX]
+        self.min_state = [Const.Y_MIN, Const.Z_MIN, Const.VY_MIN, Const.VZ_MIN, Const.VW_MIN]
+        self.max_state = [Const.Y_MAX, Const.Z_MAX, Const.VY_MAX, Const.VZ_MAX, Const.VW_MAX]
 
-        self.state = Const.START_STATE
+        const = Const()
+        self.state = const.create_initial_state()
 
-        self.record_state()
+        with open('states_visited.txt', 'w+') as f:
+            output_data = [str(value) for value in self.state]
+            f.write('\t'.join(output_data) + '\n')
 
+    
+    def state_values(self):
+        '''
+        Method to improve readability. Returns elements in self.state (for naming conventions)
+        '''
+        return self.state[0], self.state[1], self.state[2], self.state[3], self.state[4]
+
+    
     def get_state(self):
         ''' 
         Returns current state after discretizing
         '''
+        print "Continuous state: ", self.state
         bin_sizes = [Const.BIN_SIZE_Y, Const.BIN_SIZE_Z, Const.BIN_SIZE_VY, Const.BIN_SIZE_VZ, Const.BIN_SIZE_VW]
-        discrete_state = [ceil((self.state[i] - self.min_state[i])/bin_sizes[i]) for i in range(len(self.state))]
+        discrete_state = [math.ceil((self.state[i] - self.min_state[i])/bin_sizes[i]) for i in range(len(self.state))]
         return discrete_state
 
+    
     def record_state(self):
         '''
         Keeps a log of the states (continuous) visited in simulation
         '''
         with open('states_visited.txt', 'a+') as f:
-            f.write(self.state)
+            output_data = [str(value) for value in self.state]
+            f.write('\t'.join(output_data) + '\n')      
 
+    
     def snap_to_bounds(self, values, l_bounds, r_bounds):
         '''
         Checks values, l_bounds, r_bounds elementwise to see if value is in the 
@@ -45,23 +65,31 @@ class AirplaneSimulator:
             elif (value < l_bounds[i]):
                 values[i] = l_bounds[i]
 
+    
     def update(self, action):
         '''
         Updates state according to a given action
         '''
         # Bound actions
-        snap_to_bounds(action, self.min_action, self.max_action)
+        self.snap_to_bounds(action, self.min_action, self.max_action)
 
-        y = self.state[0] + (action[0] + 0.01 * (self.state[4]**2)) * Const.BIN_SIZE_T
-        z = self.state[1] + action[1] * Const.BIN_SIZE_T
-        v_y = self.state[2] + (action[0] + 0.01 * (self.state[4]**2)) * Const.BIN_SIZE_T
-        v_z = self.state[3] + action[1] * Const.BIN_SIZE_T
-        v_w = random.randn(self.state[4], Const.SIGMA)
-        
-        self.state = (y, z, v_y, v_z, v_w)
-        # Bound state
-        snap_to_bounds(state, self.min_state, self.max_state)
+        # Name elements in state variable for readability
+        y, z, v_y, v_z, v_w = self.state_values()
+        # Name elements in action variable for readibility
+        delta_vy, delta_vz = action[0], action[1]
+
+        # update state elements
+        next_y = y + v_y * Const.BIN_SIZE_T
+        next_z = z + v_z * Const.BIN_SIZE_T
+        wind_effect = 0.01 * (v_w**2) * v_w/abs(v_w)
+        next_vy = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
+        next_vz = v_z + delta_vz * Const.BIN_SIZE_T
+        next_vw = random.normalvariate(v_w, Const.VW_SIGMA)
+
+        # update state, bound if needed, then record to log file
+        self.state = [next_y, next_z, next_vy, next_vz, next_vw]
+        self.snap_to_bounds(self.state, self.min_state, self.max_state)
+        self.record_state()
 
         self.time_elapsed += Const.BIN_SIZE_T
 
-        self.record_state()

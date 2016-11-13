@@ -31,7 +31,7 @@ class AirplaneSimulator:
         '''
         Keeps a log of the states (continuous) visited in simulation
         '''
-        with open('states_visited', 'w') as f:
+        with open('states_visited.txt', 'a+') as f:
             f.write(self.state)
 
     def snap_to_bounds(self, values, l_bounds, r_bounds):

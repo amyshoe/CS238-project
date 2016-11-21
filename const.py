@@ -1,5 +1,3 @@
-import random
-
 # This class stores all the global parameters for the simulation
 
 class Const(object):
@@ -62,18 +60,9 @@ class Const(object):
     BINS_DELTA_VY = 200
     
     # Set the simulation starting parameters here
+    START_T = T_MAX          # in sec
     START_Y = 0.0            # in km
     START_Z = Z_MAX          # in km
     START_VY = 0.0           # in km/hr
     START_VZ = -13.0         # in km/hr
     START_VW = VW            # in km/hr
-    
-    # This method 
-    def create_initial_state(self):
-        # Generate wind direction randomly
-        f = -1 if random.uniform(0, 1) < 0.5 else 1
-        
-        return [self.START_Y, self.START_Z, self.START_VY, self.START_VZ, f * self.START_VW]
-            
-    
-    

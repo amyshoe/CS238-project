@@ -1,4 +1,4 @@
-import const
+from const import Const
 import numpy as np
 import math, time, collections
 import simulator
@@ -63,7 +63,7 @@ for num_iter in xrange(1,maxIters):
     ##Learning Rate more intelligently
     step_size = 1.0/(num_iter+1)
 
-    while not sim.isEnd():
+    while not sim.is_end(sim.get_state()):
         state = sim.get_state()
         possible_actions = sim.get_action_list()
         best_action = None

@@ -77,6 +77,8 @@ class AirplaneSimulator:
         y, z, v_y, v_z, v_w = self.state_values()
         # Name elements in action variable for readibility
         delta_vy, delta_vz = action[0], action[1]
+        # get reward before updating the steps
+        reward = self.get_reward(action)
 
         # update state elements
         next_y = y + v_y * Const.BIN_SIZE_T
@@ -92,4 +94,91 @@ class AirplaneSimulator:
         self.record_state()
 
         self.time_elapsed += Const.BIN_SIZE_T
+
+    def get_y_penalty(y):
+        """
+        returns the y penalty
+        """
+        ##HARD CODING STUFF HERE ----------------------->
+        if y >= Const.Y_max or y<= Const.Y_min:
+            return -1e10
+        else: ##Other wise a quadratic penalty based upon 
+            return -max(y/Const.Y_MAX,y/Const.Y_MIN)*1e10
+
+    def get_delta_vz_penalty(delta_vz):
+        """
+        returns the vz penalty
+        """
+        max_d = Const.DELTA_VZ_MAX
+        min_d = Const.DELTA_VZ_MIN
+
+        ##HARD CODING STUFF HERE ----------------------->
+        if delta_vz <= max_d and delta_vz >= min_d:
+            return -100*delta_vz**2
+        else:
+            return -1e10
+
+
+    def get_delta_vy_penalty(delta_vy):
+        """
+        returns the vz penalty
+        """
+        max_d = Const.DELTA_VY_MAX
+        min_d = Const.DELTA_VY_MIN
+
+        ##HARD CODING STUFF HERE ----------------------->
+        if delta_vy <= max_d and delta_vy >= min_d:
+            return -100*delta_vy**2
+        else:
+            return -1e10
+
+    def safe_landing(self,state):
+        """
+        returns True if the aircraft was perfectly landed
+        """
+        return False
+        
+    def landing_penalty(next_state):
+        """
+        returns a penalty assosciated with landing
+        Assumption: the aircraft has been landed safely
+        """
+        return -1e10
+
+    def get_reward(self,action,next_state):
+        """
+        Outputs the reward for the given action at the current state
+        """
+        # Name elements in state variable for readability
+        #y, z, v_y, v_z, v_w, t = self.state_values()
+        y, z, v_y, v_z, v_w, t = next_state
+
+        # Name elements in action variable for readibility
+        delta_vy, delta_vz = action[0], action[1]
+
+        if self.is_end(next_state):
+            ##simulation has ended!?
+            ##Add a crazy penalty
+            if self.time_remaining > 0:
+                return -1e10
+            else:##It reached the end without crashing before hand
+                if self.safe_landing(next_state):
+                    return landing_penalty(next_state)
+                else:
+                    return -1e10
+        else:##It is not an end state
+
+            ##penalty because of y deviation
+            y_penalty = get_y_penalty(y)
+            delta_vz_penalty = get_delta_vz_penalty(delta_vz)
+            delta_vy_penalty = get_delta_vy_penalty(delta_vy)
+
+            return (y_penalty + delta_vy_penalty + delta_vz_penalty)
+
+
+
+
+
+
+
 

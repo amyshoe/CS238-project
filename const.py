@@ -19,6 +19,7 @@ class Const(object):
     T_MAX = 275.0            # in seconds
     T_MIN = 0.0              # in seconds
     BIN_SIZE_T = 1.0         # in seconds
+    BINS_T = 276             # number of bins in T
     
     # Flight path and velocity parameters
     ALPHA = 2.86             # in degrees
@@ -49,14 +50,14 @@ class Const(object):
     BINS_VW = 50
     
     # Action parameters
-    DELTA_VZ_MAX = 35.0      # in km/hr
-    DELTA_VZ_MIN = -35.0     # in km/hr
-    BIN_SIZE_DELTA_VZ = 0.35 # in km/hr
+    DELTA_VZ_MAX = 35.0      # in km/hr/s
+    DELTA_VZ_MIN = -35.0     # in km/hr/s
+    BIN_SIZE_DELTA_VZ = 0.35 # in km/hr/s
     BINS_DELTA_VZ = 200
     
-    DELTA_VY_MAX = 35.0      # in km/hr
-    DELTA_VY_MIN = -35.0     # in km/hr
-    BIN_SIZE_DELTA_VY = 0.35 # in km/hr
+    DELTA_VY_MAX = 35.0      # in km/hr/s
+    DELTA_VY_MIN = -35.0     # in km/hr/s
+    BIN_SIZE_DELTA_VY = 0.35 # in km/hr/s
     BINS_DELTA_VY = 200
     
     # Set the simulation starting parameters here

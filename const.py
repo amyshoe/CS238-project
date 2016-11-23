@@ -67,3 +67,6 @@ class Const(object):
     START_VY = 0.0           # in km/hr
     START_VZ = -13.0         # in km/hr
     START_VW = VW            # in km/hr
+    
+    # Set the penalty parameters here
+    PENALTY_END_STATE = -1e6

@@ -1,184 +1,342 @@
 from const import Const
-import math
-import random
+import math, random
 
-# TODO:  check update formulas in update() function --- Rahul
 # TODO:  decide if we want the log to look nice (i.e., decide on #sigfig convention)
-#        right now it's just full possible precision.
+# Amy responible for the method record_state
+# Amy write nice comments for the code
+# Discuss "get_continuous_state" method with team
+# Amy, Sagar to check logic of method "plane_state_analysis"
 
 class AirplaneSimulator:
     '''
-    documentation! we'll do it later
+    This is the airplane simulator class
     '''
     def __init__(self):
         '''
-        fill this in yo
+        This is the constructor function.
+        The bounds, bin size and number of bins parameters are initialized for state and action.
+        The initial continuous state, discrete state and penalty calculator are initialized.
+        The file to write the log is also opened
         '''
-        self.time_elapsed = 0
-        self.min_action = [Const.DELTA_VY_MIN, Const.DELTA_VZ_MIN]
-        self.max_action = [Const.DELTA_VY_MAX, Const.DELTA_VZ_MAX]
-        self.min_state = [Const.Y_MIN, Const.Z_MIN, Const.VY_MIN, Const.VZ_MIN, Const.VW_MIN]
-        self.max_state = [Const.Y_MAX, Const.Z_MAX, Const.VY_MAX, Const.VZ_MAX, Const.VW_MAX]
-
-        const = Const()
-        self.state = const.create_initial_state()
-
+        
+        self.bin_sizes_states = self.get_state_bin_sizes()
+        self.bin_sizes_actions = self.get_action_bin_sizes()
+        
+        self.min_bounds_states, self.max_bounds_states = self.get_state_bounds()
+        self.min_bounds_actions, self.max_bounds_actions = self.get_action_bounds()
+        
+        self.total_bins_states = self.get_state_total_bins()
+        self.total_bins_actions = self.get_action_total_bins()
+        
+        self.state = self.create_initial_state()
+        self.discrete_state = self.get_discrete_state(self.state)
+        self.end_state_flag = self.is_end_state(self.state)
+        
         with open('states_visited.txt', 'w+') as f:
             output_data = [str(value) for value in self.state]
             f.write('\t'.join(output_data) + '\n')
-
     
-    def state_values(self):
+    def create_initial_state(self):
         '''
-        Method to improve readability. Returns elements in self.state (for naming conventions)
-        '''
-        return self.state[0], self.state[1], self.state[2], self.state[3], self.state[4]
-
+        Method to initialize the starting state
+        '''        
+        # Generate wind directions randomly
+        f = -1 if random.uniform(0, 1) < 0.5 else 1
+        return [Const.START_T , Const.START_Y, Const.START_Z, \
+                Const.START_VY, Const.START_VZ, f * Const.START_VW]
     
-    def get_state(self):
+    def get_state_bin_sizes(self):
+        '''
+        Method to get the bin sizes for the state variables
         ''' 
-        Returns current state after discretizing
+        return [Const.BIN_SIZE_T, Const.BIN_SIZE_Y, Const.BIN_SIZE_Z, \
+                Const.BIN_SIZE_VY, Const.BIN_SIZE_VZ, Const.BIN_SIZE_VW]
+        
+    def get_action_bin_sizes(self):
         '''
-        print "Continuous state: ", self.state
-        bin_sizes = [Const.BIN_SIZE_Y, Const.BIN_SIZE_Z, Const.BIN_SIZE_VY, Const.BIN_SIZE_VZ, Const.BIN_SIZE_VW]
-        discrete_state = [math.ceil((self.state[i] - self.min_state[i])/bin_sizes[i]) for i in range(len(self.state))]
+        Method to get the bin sizes for the actions
+        ''' 
+        return [Const.BIN_SIZE_DELTA_VY, Const.BIN_SIZE_DELTA_VZ]
+        
+    def get_state_bounds(self):
+        '''
+        Method to get the min/max bounds for the state variables
+        ''' 
+        state_min_bound = [Const.T_MIN, Const.Y_MIN, Const.Z_MIN, \
+                           Const.VY_MIN, Const.VZ_MIN, Const.VW_MIN]
+        state_max_bound = [Const.T_MAX, Const.Y_MAX, Const.Z_MAX, \
+                           Const.VY_MAX, Const.VZ_MAX, Const.VW_MAX]
+        return state_min_bound, state_max_bound
+        
+    def get_action_bounds(self):
+        '''
+        Method to get the min/max bounds for the actions
+        ''' 
+        action_min_bound = [Const.DELTA_VY_MIN, Const.DELTA_VZ_MIN]
+        action_max_bound = [Const.DELTA_VY_MAX, Const.DELTA_VZ_MAX]
+        return action_min_bound, action_max_bound
+        
+    def get_state_total_bins(self):
+        '''
+        Method to get the total number of bins for the state variables
+        ''' 
+        return [Const.BINS_T, Const.BINS_Y, Const.BINS_Z, \
+                Const.BINS_VY, Const.BINS_VZ, Const.BINS_VW]
+        
+    def get_action_total_bins(self):
+        '''
+        Method to get the total number of bins for the actions
+        ''' 
+        return [Const.BINS_DELTA_VY, Const.BINS_DELTA_VZ]
+        
+    def is_end_state(self, state):
+        '''
+        Method to detect if a state is an end state
+        State is an end state if any of the following is True:
+            - t <= 0
+            - plane is outside radar
+            - plane has crashed
+        Return True if state is an end state, else return False
+        '''
+        # Name elements in state variables for readability
+        t = state[0]
+        
+        # Check if t <= T_MIN (< should never happen)
+        if t <= Const.T_MIN:
+            return True
+        # Otherwise check for plane outside radar & plane crash
+        else:
+            plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(state)
+            if plane_outside_radar == True or plane_crash == True:
+                return True
+            else:
+                return False
+        
+    def plane_state_analysis(self, state):
+        '''
+        Method that takes a state and detects the following:
+        
+        A. Plane outside radar or not.
+        Plane is outside radar if the following has happened:
+            - lateral position is outside [Y_MIN, Y_MAX]
+            - vertical position is > Z_MAX
+            - plane_outside_radar = True if above holds, False otherwise
+            
+        B. Plane has crashed or not.
+        Plane has crashed if the following has happened:
+            - If t > T_MIN : plane crashed if z <= Z_MIN
+            - If t = T_MIN : plane crashed if z <= Z_LAND_TOL and one of following is true:
+                - v_y > VY_LAND_TOL_MAX or v_y < VY_LAND_TOL_MIN
+                - v_z < VZ_LAND_TOL_MIN
+                - y > Y_MAX_RUNWAY or y < Y_MIN_RUNWAY
+            - plane_crash = True if crash happened, False otherwise
+        
+        C. Plane has landed or not safely.
+        Plane has landed safely if t = T_MIN and the following has happened:
+            - z <= Z_LAND_TOL
+            - plane has not crashed
+            - v_z <= 0
+            
+        Method returns : plane_outside_radar, plane_crash, plane_land
+        '''
+        t, y, z, v_y, v_z, v_w = state
+        
+        # Case : Plane outside radar
+        # Check if y < Y_MIN or y > Y_MAX or z > Z_MAX
+        if y < Const.Y_MIN or y > Const.Y_MAX or z > Const.Z_MAX:
+            plane_outside_radar = True
+        else:
+            plane_outside_radar = False
+        
+        # Case : Plane crash & plane land
+        # Check for crash if t > T_MIN
+        if t > Const.T_MIN:
+            # Check if z <= Z_MIN
+            if z <= Const.Z_MIN:
+                plane_crash = True
+                plane_land = False
+            else:
+                plane_crash = False
+                plane_land = False
+                
+        # Check for crash and land if t <= T_MIN (< should never happen)
+        else:
+            # Check if z <= Z_LAND_TOL, only then crash or land can happen
+            if z <= Const.Z_LAND_TOL:
+                plane_crash = False
+                plane_land = True
+                # Check if y outside runway
+                if y > Const.Y_MAX_RUNWAY or y < Const.Y_MIN_RUNWAY:
+                    plane_crash = True
+                    plane_land = False
+                # Check if v_z < VZ_LAND_TOL_MIN
+                if v_z < Const.VZ_LAND_TOL_MIN:
+                    plane_crash = True
+                    plane_land = False
+                # Check if v_y < VY_LAND_TOL_MIN or v_y > VY_LAND_TOL_MAX
+                if v_y > Const.VY_LAND_TOL_MAX or v_y < Const.VY_LAND_TOL_MIN:
+                    plane_crash = True
+                    plane_land = False
+                # Check if v_z > 0.0
+                if v_z > 0.0:
+                    plane_land = False
+            # Crash or Land cannot happen if z > Z_LAND_TOL
+            else:
+                plane_crash = False
+                plane_land = False
+            
+        # Return the state analysis results
+        return plane_outside_radar, plane_crash, plane_land
+        
+    def get_discrete_state(self, state):
+        ''' 
+        Method to return discrete state corresponding to state
+        '''
+        # Evaluate discrete state
+        discrete_state = [int(math.floor((state_var - self.min_bounds_states[i]) \
+                         / self.bin_sizes_states[i])) for i, state_var in enumerate(state)]
+        
+        # Check if any state index < 0, if yes, set to 0
+        for i, state_var in enumerate(discrete_state):
+            if state_var < 0: discrete_state[i] = 0
+            
+        # Check if any state index >= total bins for the state, set to total bins - 1
+        for i, state_var in enumerate(discrete_state):
+            max_bin = self.total_bins_states[i]
+            if state_var >= max_bin: discrete_state[i] = max_bin - 1
+        
         return discrete_state
+        
+    def get_continuous_state(self, discrete_state):
+        ''' 
+        Method to return continuous state corresponding to a discrete state
+        Assume that discrete_state is a valid discrete state
+        '''
+        state = []
+        state.append(float(discrete_state[0]))
+        for i in range(1, len(discrete_state)):
+            state.append((discrete_state[i] + 0.5) * self.bin_sizes_states[i] \
+                         + self.min_bounds_states[i])        
+        return state
 
-    
+    def update_state(self, action):
+        '''
+        Method to update the current simulator state according to a given action
+        '''
+        # Only carry out update if self.state is not an end state
+        if self.is_end_state(self.state) == False:
+            
+            # Name elements in state variables for readability
+            t, y, z, v_y, v_z, v_w = self.state
+            
+            # Name elements in action variable for readability
+            delta_vy, delta_vz = action[0], action[1]
+            
+            # Update state variables
+            next_t = t - Const.BIN_SIZE_T
+            next_y = y + v_y * Const.BIN_SIZE_T / 3600.0
+            next_z = z + v_z * Const.BIN_SIZE_T / 3600.0
+            wind_effect = 0.01 * (v_w**2) * self.sign_real(v_w)
+            next_v_y = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
+            next_v_z = v_z + delta_vz * Const.BIN_SIZE_T
+            next_v_w = random.normalvariate(v_w, Const.VW_SIGMA)
+            
+            # Bound state variables for v_w to avoid very high values
+            self.snap_to_bounds(next_v_w, Const.VW_MIN, Const.VW_MAX)
+            
+            # Update state
+            self.state = [next_t, next_y, next_z, next_v_y, next_v_z, next_v_w]
+            self.discrete_state = self.get_discrete_state(self.state)
+            self.end_state_flag = self.is_end_state(self.state)
+            
+            # Record to log file
+            self.record_state()
+            
     def record_state(self):
         '''
-        Keeps a log of the states (continuous) visited in simulation
+        Method to keeps a log of the states (continuous) visited in simulation
         '''
         with open('states_visited.txt', 'a+') as f:
             output_data = [str(value) for value in self.state]
-            f.write('\t'.join(output_data) + '\n')      
-
+            f.write('\t'.join(output_data) + '\n')
     
-    def snap_to_bounds(self, values, l_bounds, r_bounds):
+    def snap_to_bounds(self, value, bound_min, bound_max):
         '''
-        Checks values, l_bounds, r_bounds elementwise to see if value is in the 
-        range [l_bound, r_boundset] and clips value to within that range if needed
+        Method to check value, bound_min, bound_max to see if value is in the 
+        range [bound_min bound_max] and clips value to within that range if needed.
         '''
-        for i, value in enumerate(values):
-            if (value > r_bounds[i]):
-                values[i] = r_bounds[i]
-            elif (value < l_bounds[i]):
-                values[i] = l_bounds[i]
+        if value > bound_max:
+            value = bound_max
+            return bound_max
+        elif value < bound_min:
+            value = bound_min
+            return bound_min
 
-    
-    def update(self, action):
+    def sign_real(self, number):
         '''
-        Updates state according to a given action
+        Method that takes a real number and returns its sign:
+        return 1,  if number > 0; return -1, if number < 0; return 0, if number = 0
         '''
-        # Bound actions
-        self.snap_to_bounds(action, self.min_action, self.max_action)
-
-        # Name elements in state variable for readability
-        y, z, v_y, v_z, v_w = self.state_values()
-        # Name elements in action variable for readibility
-        delta_vy, delta_vz = action[0], action[1]
-        # get reward before updating the steps
-        reward = self.get_reward(action)
-
-        # update state elements
-        next_y = y + v_y * Const.BIN_SIZE_T
-        next_z = z + v_z * Const.BIN_SIZE_T
-        wind_effect = 0.01 * (v_w**2) * v_w/abs(v_w)
-        next_vy = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
-        next_vz = v_z + delta_vz * Const.BIN_SIZE_T
-        next_vw = random.normalvariate(v_w, Const.VW_SIGMA)
-
-        # update state, bound if needed, then record to log file
-        self.state = [next_y, next_z, next_vy, next_vz, next_vw]
-        self.snap_to_bounds(self.state, self.min_state, self.max_state)
-        self.record_state()
-
-        self.time_elapsed += Const.BIN_SIZE_T
-
-    def get_y_penalty(y):
-        """
-        returns the y penalty
-        """
-        ##HARD CODING STUFF HERE ----------------------->
-        if y >= Const.Y_max or y<= Const.Y_min:
-            return -1e10
-        else: ##Other wise a quadratic penalty based upon 
-            return -max(y/Const.Y_MAX,y/Const.Y_MIN)*1e10
-
-    def get_delta_vz_penalty(delta_vz):
-        """
-        returns the vz penalty
-        """
-        max_d = Const.DELTA_VZ_MAX
-        min_d = Const.DELTA_VZ_MIN
-
-        ##HARD CODING STUFF HERE ----------------------->
-        if delta_vz <= max_d and delta_vz >= min_d:
-            return -100*delta_vz**2
+        if number == 0.0: return 0
+        elif number > 0.0: return 1
+        else: return -1        
+        
+    def get_reward(self, state, next_state):
+        '''
+        Method that takes as input continuous states : state(s), next_state(s')
+        Returns the reward for (s,s')
+        '''
+        # Name elements in state variables for readability
+        t, y, z, v_y, v_z, v_w = state
+        next_t, next_y, next_z, next_v_y, next_v_z, next_v_w = next_state
+        
+        # Check if initial state is crash / outside radar
+        # If yes, return high penalty
+        plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(state)
+        if plane_outside_radar == True:
+            p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
         else:
-            return -1e10
-
-
-    def get_delta_vy_penalty(delta_vy):
-        """
-        returns the vz penalty
-        """
-        max_d = Const.DELTA_VY_MAX
-        min_d = Const.DELTA_VY_MIN
-
-        ##HARD CODING STUFF HERE ----------------------->
-        if delta_vy <= max_d and delta_vy >= min_d:
-            return -100*delta_vy**2
+            p_outside_radar = 0.0
+        if plane_crash == True:
+            p_crash = Const.PENALTY_CRASH
         else:
-            return -1e10
-
-    def safe_landing(self,state):
-        """
-        returns True if the aircraft was perfectly landed
-        """
-        return False
-
-    def landing_penalty(next_state):
-        """
-        returns a penalty assosciated with landing
-        Assumption: the aircraft has been landed safely
-        """
-        return -1e10
-
-    def get_reward(self,action,next_state):
-        """
-        Outputs the reward for the given action at the current state
-        """
-        # Name elements in state variable for readability
-        #y, z, v_y, v_z, v_w, t = self.state_values()
-        y, z, v_y, v_z, v_w, t = next_state
-
-        # Name elements in action variable for readibility
-        delta_vy, delta_vz = action[0], action[1]
-
-        if self.is_end(next_state):
-            ##simulation has ended!?
-            ##Add a crazy penalty
-            if self.time_remaining > 0:
-                return -1e10
-            else:##It reached the end without crashing before hand
-                if self.safe_landing(next_state):
-                    return landing_penalty(next_state)
-                else:
-                    return -1e10
-        else:##It is not an end state
-
-            ##penalty because of y deviation
-            y_penalty = get_y_penalty(y)
-            delta_vz_penalty = get_delta_vz_penalty(delta_vz)
-            delta_vy_penalty = get_delta_vy_penalty(delta_vy)
-
-            return (y_penalty + delta_vy_penalty + delta_vz_penalty)
-
-
-
-
-
-
-
-
+            p_crash = 0.0
+        if plane_outside_radar == True or plane_crash == True:
+            return p_outside_radar + p_crash
+        
+        def penalty_dv(vy1, vy2, vz1, vz2):
+            '''
+            Method to calculate penalty due to change in velocity
+            '''
+            # Calculate magnitude of change in velocity
+            dv = math.sqrt((vy1 - vy2)**2.0 + (vz1 - vz2)**2.0)
+            return Const.PENALTY_DV * math.pow(dv, 2)
+        
+        p_dv = penalty_dv(v_y, next_v_y, v_z, next_v_z)
+        
+        # Check if next state is crash / outside radar
+        # If yes, return high penalty
+        plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(next_state)
+        if plane_outside_radar == True:
+            p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
+        else:
+            p_outside_radar = 0.0
+        if plane_crash == True:
+            p_crash = Const.PENALTY_CRASH
+        else:
+            p_crash = 0.0
+        if plane_outside_radar == True or plane_crash == True:
+            return p_dv + p_outside_radar + p_crash
+        
+        # Check if next_t != T_MIN
+        if next_t > Const.T_MIN:
+            return p_dv
+        # Otherwise need to check for landing
+        else:
+            # If landing missed
+            if plane_land == False:
+                return p_dv + Const.PENALTY_MISSED_LANDING
+            # If landing has happened
+            else:
+                return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2)
+        

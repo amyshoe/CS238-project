@@ -137,7 +137,7 @@ class AirplaneSimulator:
         returns True if the aircraft was perfectly landed
         """
         return False
-        
+
     def landing_penalty(next_state):
         """
         returns a penalty assosciated with landing

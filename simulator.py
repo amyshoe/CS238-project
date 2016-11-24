@@ -106,12 +106,11 @@ class AirplaneSimulator:
             return True
         # Otherwise check for plane outside radar & plane crash
         else:
-            plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(state)
-            if plane_outside_radar == True or plane_crash == True:
-                return True
-            else:
-                return False
-        
+            plane_outside_radar, plane_crash, plane_land, plane_missed_landing\
+                = self.plane_state_analysis(state)
+            
+            return plane_outside_radar or plane_crash
+            
     def plane_state_analysis(self, state):
         '''
         Method that takes a state and detects the following:
@@ -161,32 +160,34 @@ class AirplaneSimulator:
                 
         # Check for crash and land if t <= T_MIN (< should never happen)
         else:
-            # Check if z <= Z_LAND_TOL, only then crash or land can happen
-            if z <= Const.Z_LAND_TOL:
+            # Check if z <= Z_LAND_TOL and v_z <= 0.0, only then crash or land can happen
+            if z <= Const.Z_LAND_TOL and v_z <= 0.0:
                 plane_crash = False
                 plane_land = True
                 # Check if y outside runway
-                if y > Const.Y_MAX_RUNWAY or y < Const.Y_MIN_RUNWAY:
-                    plane_crash = True
-                    plane_land = False
                 # Check if v_z < VZ_LAND_TOL_MIN
-                if v_z < Const.VZ_LAND_TOL_MIN:
-                    plane_crash = True
-                    plane_land = False
                 # Check if v_y < VY_LAND_TOL_MIN or v_y > VY_LAND_TOL_MAX
-                if v_y > Const.VY_LAND_TOL_MAX or v_y < Const.VY_LAND_TOL_MIN:
+                if y > Const.Y_MAX_RUNWAY or y < Const.Y_MIN_RUNWAY \
+                        or v_z < Const.VZ_LAND_TOL_MIN \
+                        or v_y > Const.VY_LAND_TOL_MAX or v_y < Const.VY_LAND_TOL_MIN:
                     plane_crash = True
                     plane_land = False
-                # Check if v_z > 0.0
-                if v_z > 0.0:
-                    plane_land = False
+                
+#            # Check if v_z > 0.0
+#            elif v_z > 0.0:
+#                plane_land = False
             # Crash or Land cannot happen if z > Z_LAND_TOL
             else:
                 plane_crash = False
                 plane_land = False
+        
+        if t <= Const.T_MIN:
+            plane_missed_landing = not (plane_outside_radar + plane_crash + plane_land)
+        else:
+            plane_missed_landing = False
             
         # Return the state analysis results
-        return plane_outside_radar, plane_crash, plane_land
+        return plane_outside_radar, plane_crash, plane_land, plane_missed_landing
         
     def get_discrete_state(self, state):
         ''' 
@@ -290,19 +291,14 @@ class AirplaneSimulator:
         t, y, z, v_y, v_z, v_w = state
         next_t, next_y, next_z, next_v_y, next_v_z, next_v_w = next_state
         
-        # Check if initial state is crash / outside radar
-        # If yes, return high penalty
-        plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(state)
-        if plane_outside_radar == True:
-            p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
-        else:
-            p_outside_radar = 0.0
-        if plane_crash == True:
-            p_crash = Const.PENALTY_CRASH
-        else:
-            p_crash = 0.0
-        if plane_outside_radar == True or plane_crash == True:
-            return p_outside_radar + p_crash
+        # Check if initial state is crash / outside radar / missed landing
+        # If yes, return None
+        plane_outside_radar, plane_crash, plane_land, plane_missed_landing \
+            = self.plane_state_analysis(state)
+            
+        if plane_outside_radar == True or plane_crash == True or plane_missed_landing == True:
+            print "Control never reaches here - plane already outside radar / crashed."
+            return None
         
         def penalty_dv(vy1, vy2, vz1, vz2):
             '''
@@ -316,7 +312,8 @@ class AirplaneSimulator:
         
         # Check if next state is crash / outside radar
         # If yes, return high penalty
-        plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(next_state)
+        plane_outside_radar, plane_crash, plane_land, plane_missed_landing \
+            = self.plane_state_analysis(next_state)
         if plane_outside_radar == True:
             p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
         else:
@@ -325,8 +322,12 @@ class AirplaneSimulator:
             p_crash = Const.PENALTY_CRASH
         else:
             p_crash = 0.0
-        if plane_outside_radar == True or plane_crash == True:
-            return p_dv + p_outside_radar + p_crash
+        if plane_missed_landing == True:
+            p_missed_landing = Const.PENALTY_MISSED_LANDING
+        else:
+            p_missed_landing = 0.0
+        if plane_outside_radar == True or plane_crash == True or plane_missed_landing == True:
+            return p_dv + p_outside_radar + p_crash + p_missed_landing
         
         # Check if next_t != T_MIN
         if next_t > Const.T_MIN:
@@ -335,7 +336,8 @@ class AirplaneSimulator:
         else:
             # If landing missed
             if plane_land == False:
-                return p_dv + Const.PENALTY_MISSED_LANDING
+                print "Control should not reach here...plane should have safely landed."
+                return None
             # If landing has happened
             else:
                 return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2)

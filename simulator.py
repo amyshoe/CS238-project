@@ -140,6 +140,8 @@ class AirplaneSimulator:
         '''
         t, y, z, v_y, v_z, v_w = state
         
+        plane_land = False
+        plane_missed_landing = False
         # Case : Plane outside radar
         # Check if y < Y_MIN or y > Y_MAX or z > Z_MAX
         if y < Const.Y_MIN or y > Const.Y_MAX or z > Const.Z_MAX:
@@ -153,10 +155,8 @@ class AirplaneSimulator:
             # Check if z <= Z_MIN
             if z <= Const.Z_MIN:
                 plane_crash = True
-                plane_land = False
             else:
                 plane_crash = False
-                plane_land = False
                 
         # Check for crash and land if t <= T_MIN (< should never happen)
         else:
@@ -164,6 +164,7 @@ class AirplaneSimulator:
             if z <= Const.Z_LAND_TOL and v_z <= 0.0:
                 plane_crash = False
                 plane_land = True
+
                 # Check if y outside runway
                 # Check if v_z < VZ_LAND_TOL_MIN
                 # Check if v_y < VY_LAND_TOL_MIN or v_y > VY_LAND_TOL_MAX
@@ -173,19 +174,11 @@ class AirplaneSimulator:
                     plane_crash = True
                     plane_land = False
                 
-#            # Check if v_z > 0.0
-#            elif v_z > 0.0:
-#                plane_land = False
-            # Crash or Land cannot happen if z > Z_LAND_TOL
             else:
                 plane_crash = False
                 plane_land = False
+                plane_missed_landing = True
         
-        if t <= Const.T_MIN:
-            plane_missed_landing = not (plane_outside_radar + plane_crash + plane_land)
-        else:
-            plane_missed_landing = False
-            
         # Return the state analysis results
         return plane_outside_radar, plane_crash, plane_land, plane_missed_landing
         
@@ -318,18 +311,21 @@ class AirplaneSimulator:
             p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
         else:
             p_outside_radar = 0.0
+
         if plane_crash == True:
             p_crash = Const.PENALTY_CRASH
         else:
             p_crash = 0.0
+
         if plane_missed_landing == True:
             p_missed_landing = Const.PENALTY_MISSED_LANDING
         else:
             p_missed_landing = 0.0
-        if plane_outside_radar == True or plane_crash == True or plane_missed_landing == True:
+
+        if plane_outside_radar or plane_crash or plane_missed_landing:
             return p_dv + p_outside_radar + p_crash + p_missed_landing
         
-        # Check if next_t != T_MIN
+        # Check if next_t != T_MIN - Not ended
         if next_t > Const.T_MIN:
             return p_dv
         # Otherwise need to check for landing

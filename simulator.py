@@ -2,8 +2,10 @@ from const import Const
 import math, random
 
 # TODO:  decide if we want the log to look nice (i.e., decide on #sigfig convention)
-# Amy needs to work on the method record_state
+# Amy responible for the method record_state
 # Amy write nice comments for the code
+# Discuss "get_continuous_state" method with team
+# Amy, Sagar to check logic of method "plane_state_analysis"
 
 class AirplaneSimulator:
     '''
@@ -28,7 +30,8 @@ class AirplaneSimulator:
         
         self.state = self.create_initial_state()
         self.discrete_state = self.get_discrete_state(self.state)
-
+        self.end_state_flag = self.is_end_state(self.state)
+        
         with open('states_visited.txt', 'w+') as f:
             output_data = [str(value) for value in self.state]
             f.write('\t'.join(output_data) + '\n')
@@ -89,19 +92,101 @@ class AirplaneSimulator:
     def is_end_state(self, state):
         '''
         Method to detect if a state is an end state
+        State is an end state if any of the following is True:
+            - t <= 0
+            - plane is outside radar
+            - plane has crashed
         Return True if state is an end state, else return False
         '''
         # Name elements in state variables for readability
+        t = state[0]
+        
+        # Check if t <= T_MIN (< should never happen)
+        if t <= Const.T_MIN:
+            return True
+        # Otherwise check for plane outside radar & plane crash
+        else:
+            plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(state)
+            if plane_outside_radar == True or plane_crash == True:
+                return True
+            else:
+                return False
+        
+    def plane_state_analysis(self, state):
+        '''
+        Method that takes a state and detects the following:
+        
+        A. Plane outside radar or not.
+        Plane is outside radar if the following has happened:
+            - lateral position is outside [Y_MIN, Y_MAX]
+            - vertical position is > Z_MAX
+            - plane_outside_radar = True if above holds, False otherwise
+            
+        B. Plane has crashed or not.
+        Plane has crashed if the following has happened:
+            - If t > T_MIN : plane crashed if z <= Z_MIN
+            - If t = T_MIN : plane crashed if z <= Z_LAND_TOL and one of following is true:
+                - v_y > VY_LAND_TOL_MAX or v_y < VY_LAND_TOL_MIN
+                - v_z < VZ_LAND_TOL_MIN
+                - y > Y_MAX_RUNWAY or y < Y_MIN_RUNWAY
+            - plane_crash = True if crash happened, False otherwise
+        
+        C. Plane has landed or not safely.
+        Plane has landed safely if t = T_MIN and the following has happened:
+            - z <= Z_LAND_TOL
+            - plane has not crashed
+            - v_z <= 0
+            
+        Method returns : plane_outside_radar, plane_crash, plane_land
+        '''
         t, y, z, v_y, v_z, v_w = state
         
-        # Check if t <= T_MIN
-        if t <= Const.T_MIN: return True
-        # Check if z <= Z_MIN
-        if z <= Const.Z_MIN: return True
-        # Check if y <= Y_MIN or y >= Y_MAX
-        if y <= Const.Y_MIN or y >= Const.Y_MAX: return True
-        # If none of the above checks is true, end state is not reached
-        return False
+        # Case : Plane outside radar
+        # Check if y < Y_MIN or y > Y_MAX or z > Z_MAX
+        if y < Const.Y_MIN or y > Const.Y_MAX or z > Const.Z_MAX:
+            plane_outside_radar = True
+        else:
+            plane_outside_radar = False
+        
+        # Case : Plane crash & plane land
+        # Check for crash if t > T_MIN
+        if t > Const.T_MIN:
+            # Check if z <= Z_MIN
+            if z <= Const.Z_MIN:
+                plane_crash = True
+                plane_land = False
+            else:
+                plane_crash = False
+                plane_land = False
+                
+        # Check for crash and land if t <= T_MIN (< should never happen)
+        else:
+            # Check if z <= Z_LAND_TOL, only then crash or land can happen
+            if z <= Const.Z_LAND_TOL:
+                plane_crash = False
+                plane_land = True
+                # Check if y outside runway
+                if y > Const.Y_MAX_RUNWAY or y < Const.Y_MIN_RUNWAY:
+                    plane_crash = True
+                    plane_land = False
+                # Check if v_z < VZ_LAND_TOL_MIN
+                if v_z < Const.VZ_LAND_TOL_MIN:
+                    plane_crash = True
+                    plane_land = False
+                # Check if v_y < VY_LAND_TOL_MIN or v_y > VY_LAND_TOL_MAX
+                if v_y > Const.VY_LAND_TOL_MAX or v_y < Const.VY_LAND_TOL_MIN:
+                    plane_crash = True
+                    plane_land = False
+                # Check if v_z > 0.0
+                if v_z > 0.0:
+                    plane_land = False
+            # Crash or Land cannot happen if z > Z_LAND_TOL
+            else:
+                plane_crash = False
+                plane_land = False
+            
+        # Return the state analysis results
+        return plane_outside_radar, plane_crash, plane_land
         
     def get_discrete_state(self, state):
         ''' 
@@ -152,18 +237,17 @@ class AirplaneSimulator:
             next_y = y + v_y * Const.BIN_SIZE_T / 3600.0
             next_z = z + v_z * Const.BIN_SIZE_T / 3600.0
             wind_effect = 0.01 * (v_w**2) * self.sign_real(v_w)
-            next_vy = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
-            next_vz = v_z + delta_vz * Const.BIN_SIZE_T
-            next_vw = random.normalvariate(v_w, Const.VW_SIGMA)
+            next_v_y = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
+            next_v_z = v_z + delta_vz * Const.BIN_SIZE_T
+            next_v_w = random.normalvariate(v_w, Const.VW_SIGMA)
             
-            # Bound state variables for y and z positions, v_w
-            self.snap_to_bounds(next_y, Const.Y_MIN, Const.Y_MAX)
-            self.snap_to_bounds(next_z, Const.Z_MIN, float('inf'))
-            self.snap_to_bounds(next_vw, Const.VW_MIN, Const.VW_MAX)
+            # Bound state variables for v_w to avoid very high values
+            self.snap_to_bounds(next_v_w, Const.VW_MIN, Const.VW_MAX)
             
             # Update state
-            self.state = [next_t, next_y, next_z, next_vy, next_vz, next_vw]
+            self.state = [next_t, next_y, next_z, next_v_y, next_v_z, next_v_w]
             self.discrete_state = self.get_discrete_state(self.state)
+            self.end_state_flag = self.is_end_state(self.state)
             
             # Record to log file
             self.record_state()
@@ -174,8 +258,7 @@ class AirplaneSimulator:
         '''
         with open('states_visited.txt', 'a+') as f:
             output_data = [str(value) for value in self.state]
-            f.write('\t'.join(output_data) + '\n')      
-
+            f.write('\t'.join(output_data) + '\n')
     
     def snap_to_bounds(self, value, bound_min, bound_max):
         '''
@@ -196,13 +279,64 @@ class AirplaneSimulator:
         '''
         if number == 0.0: return 0
         elif number > 0.0: return 1
-        else: return -1
+        else: return -1        
         
-    def get_reward(self, state, action, next_state):
+    def get_reward(self, state, next_state):
         '''
-        Method that takes as input state(s), action(a), next_state(s')
-        Returns the reward for (s,a,s')
+        Method that takes as input continuous states : state(s), next_state(s')
+        Returns the reward for (s,s')
         '''
-        def penalty_end_state():
-            
-            
+        # Name elements in state variables for readability
+        t, y, z, v_y, v_z, v_w = state
+        next_t, next_y, next_z, next_v_y, next_v_z, next_v_w = next_state
+        
+        # Check if initial state is crash / outside radar
+        # If yes, return high penalty
+        plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(state)
+        if plane_outside_radar == True:
+            p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
+        else:
+            p_outside_radar = 0.0
+        if plane_crash == True:
+            p_crash = Const.PENALTY_CRASH
+        else:
+            p_crash = 0.0
+        if plane_outside_radar == True or plane_crash == True:
+            return p_outside_radar + p_crash
+        
+        def penalty_dv(vy1, vy2, vz1, vz2):
+            '''
+            Method to calculate penalty due to change in velocity
+            '''
+            # Calculate magnitude of change in velocity
+            dv = math.sqrt((vy1 - vy2)**2.0 + (vz1 - vz2)**2.0)
+            return Const.PENALTY_DV * math.pow(dv, 2)
+        
+        p_dv = penalty_dv(v_y, next_v_y, v_z, next_v_z)
+        
+        # Check if next state is crash / outside radar
+        # If yes, return high penalty
+        plane_outside_radar, plane_crash, plane_land = self.plane_state_analysis(next_state)
+        if plane_outside_radar == True:
+            p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
+        else:
+            p_outside_radar = 0.0
+        if plane_crash == True:
+            p_crash = Const.PENALTY_CRASH
+        else:
+            p_crash = 0.0
+        if plane_outside_radar == True or plane_crash == True:
+            return p_dv + p_outside_radar + p_crash
+        
+        # Check if next_t != T_MIN
+        if next_t > Const.T_MIN:
+            return p_dv
+        # Otherwise need to check for landing
+        else:
+            # If landing missed
+            if plane_land == False:
+                return p_dv + Const.PENALTY_MISSED_LANDING
+            # If landing has happened
+            else:
+                return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2)
+        

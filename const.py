@@ -37,9 +37,13 @@ class Const(object):
     # Mass of plane
     M = 1.0                  # in kg
     
-    # Runway parameters
+    # Runway parameters and landing parameters
     Y_MAX_RUNWAY = 0.04      # in km
     Y_MIN_RUNWAY = -0.04     # in km
+    Z_LAND_TOL = 0.02        # in km
+    VY_LAND_TOL_MAX = 20.0   # in km/hr
+    VY_LAND_TOL_MIN = -20.0  # in km/hr
+    VZ_LAND_TOL_MIN = -10.0  # in km/hr
     
     # Wind parameters
     VW_SIGMA = 1.0           # in km/hr
@@ -69,4 +73,8 @@ class Const(object):
     START_VW = VW            # in km/hr
     
     # Set the penalty parameters here
-    PENALTY_END_STATE = -1e6
+    PENALTY_CRASH = -1e8
+    PENALTY_OUTSIDE_RADAR = -1e8
+    PENALTY_MISSED_LANDING = -1e3
+    PENALTY_DV = 10
+    PENALTY_RUNWAY = 10

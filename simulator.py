@@ -124,7 +124,7 @@ class AirplaneSimulator:
         B. Plane has crashed or not.
         Plane has crashed if the following has happened:
             - If t > T_MIN : plane crashed if z <= Z_MIN
-            - If t = T_MIN : plane crashed if z <= Z_LAND_TOL and one of following is true:
+            - If t = T_MIN : plane crashed if z <= Z_LAND_TOL, v_z <= 0.0 and one of following is true:
                 - v_y > VY_LAND_TOL_MAX or v_y < VY_LAND_TOL_MIN
                 - v_z < VZ_LAND_TOL_MIN
                 - y > Y_MAX_RUNWAY or y < Y_MIN_RUNWAY
@@ -135,8 +135,13 @@ class AirplaneSimulator:
             - z <= Z_LAND_TOL
             - plane has not crashed
             - v_z <= 0
-            
-        Method returns : plane_outside_radar, plane_crash, plane_land
+        
+        D. Plane has missed landing or not.
+        Planne has missed landing only if the following are true:
+            - t = T_MIN
+            - plane did not crash
+            - plane did not land
+        Method returns : plane_outside_radar, plane_crash, plane_land, plane_missed_landing
         '''
         t, y, z, v_y, v_z, v_w = state
         
@@ -169,11 +174,11 @@ class AirplaneSimulator:
                 # Check if v_z < VZ_LAND_TOL_MIN
                 # Check if v_y < VY_LAND_TOL_MIN or v_y > VY_LAND_TOL_MAX
                 if y > Const.Y_MAX_RUNWAY or y < Const.Y_MIN_RUNWAY \
-                        or v_z < Const.VZ_LAND_TOL_MIN \
-                        or v_y > Const.VY_LAND_TOL_MAX or v_y < Const.VY_LAND_TOL_MIN:
+                    or v_z < Const.VZ_LAND_TOL_MIN \
+                    or v_y > Const.VY_LAND_TOL_MAX or v_y < Const.VY_LAND_TOL_MIN:
                     plane_crash = True
                     plane_land = False
-                
+                    
             else:
                 plane_crash = False
                 plane_land = False
@@ -212,7 +217,37 @@ class AirplaneSimulator:
             state.append((discrete_state[i] + 0.5) * self.bin_sizes_states[i] \
                          + self.min_bounds_states[i])        
         return state
-
+        
+    def get_discrete_action(self, action):
+        ''' 
+        Method to return discrete action corresponding to action
+        '''
+        # Evaluate discrete action
+        discrete_action = [int(math.floor((actions - self.min_bounds_actions[i]) \
+                         / self.bin_sizes_actions[i])) for i, actions in enumerate(action)]
+        
+        # Check if any action index < 0, if yes, set to 0
+        for i, actions in enumerate(discrete_action):
+            if actions < 0: discrete_action[i] = 0
+        
+        # Check if any action index >= total bins for the action, set to total bins - 1
+        for i, actions in enumerate(discrete_action):
+            max_bin = self.total_bins_actions[i]
+            if actions >= max_bin: discrete_action[i] = max_bin - 1
+        
+        return discrete_action
+        
+    def get_continuous_action(self, discrete_action):
+        ''' 
+        Method to return continuous action corresponding to a discrete action
+        Assume that discrete_action is a valid discrete action
+        '''
+        action = []
+        for i in range(len(discrete_action)):
+            action.append((discrete_action[i] + 0.5) * self.bin_sizes_actions[i] \
+                         + self.min_bounds_actions[i])        
+        return action
+        
     def update_state(self, action):
         '''
         Method to update the current simulator state according to a given action
@@ -289,8 +324,9 @@ class AirplaneSimulator:
         plane_outside_radar, plane_crash, plane_land, plane_missed_landing \
             = self.plane_state_analysis(state)
             
-        if plane_outside_radar == True or plane_crash == True or plane_missed_landing == True:
-            print "Control never reaches here - plane already outside radar / crashed."
+        if plane_outside_radar == True or plane_crash == True \
+            or plane_missed_landing == True or plane_land == True:
+            print "Control never reaches here - plane already outside radar / crashed / landed / missed landing."
             return None
         
         def penalty_dv(vy1, vy2, vz1, vz2):
@@ -303,7 +339,7 @@ class AirplaneSimulator:
         
         p_dv = penalty_dv(v_y, next_v_y, v_z, next_v_z)
         
-        # Check if next state is crash / outside radar
+        # Check if next state is crash / outside radar / missed landing
         # If yes, return high penalty
         plane_outside_radar, plane_crash, plane_land, plane_missed_landing \
             = self.plane_state_analysis(next_state)
@@ -337,4 +373,29 @@ class AirplaneSimulator:
             # If landing has happened
             else:
                 return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2)
+        
+    def controller(self, discrete_action):
+        '''
+        Method that takes as input discrete action : discrete_action
+        Outside entities should update the class objects through this method.
+        The following steps are performed:
+            - Convert discrete_action into continuous action
+            - Update the state, discrete state
+            - Compute the reward
+            - Return new discrete state, reward
+        '''
+        # Convert discrete action to continuous action, and snap to bounds
+        action = self.get_continuous_action(discrete_action)
+        for i, actions in enumerate(action):
+            self.snap_to_bounds(actions, self.min_bounds_actions[i], self.max_bounds_actions[i])
+            
+        # Record current state & update the state
+        current_state = self.state
+        self.update_state(action)
+        
+        # Compute reward
+        reward = self.get_reward(current_state, self.state)
+        
+        # Return new discrete state and controller
+        return self.discrete_state, reward
         

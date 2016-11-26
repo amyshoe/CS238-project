@@ -62,9 +62,9 @@ for num_iter in xrange(1,maxIters):
 
     ##Learning Rate more intelligently
     step_size = 1.0/(num_iter+1)
-
-    while not sim.is_end(sim.get_state()):
-        state = sim.get_state()
+    state = sim.get_discrete_state(sim.state)
+    while not sim.end_state_flag:
+        #state = sim.get_state()
         possible_actions = sim.get_action_list()
         best_action = None
         best_val = None
@@ -84,7 +84,7 @@ for num_iter in xrange(1,maxIters):
         val = sparseProduct(old_phis,W)
 
         ##Get the new_state, and the reward assosciated with the transitioning
-        (reward, new_state) = sim.update(final_action)
+        (reward, new_state) = sim.controller(final_action)
 
         ##possible actions from the new state
         possible_actions = sim.get_action_list()

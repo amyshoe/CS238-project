@@ -248,6 +248,19 @@ class AirplaneSimulator:
                          + self.min_bounds_actions[i])        
         return action
         
+    def get_action_list(self):
+        ''' 
+        Method to return get discrete action list from the current state of simulator.
+        If simulator is in an end state, return None
+        If simulator is not in an end state, return all possible actions
+        '''
+        if self.is_end_state(self.state) == True:
+            return None
+        else:
+            discrete_action_list = [[a1, a2] for a1 in range(self.total_bins_actions[0])\
+                                    for a2 in range(self.total_bins_actions[1])]
+            return discrete_action_list
+            
     def update_state(self, action):
         '''
         Method to update the current simulator state according to a given action

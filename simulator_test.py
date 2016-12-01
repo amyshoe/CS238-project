@@ -6,16 +6,34 @@ sim = simulator.AirplaneSimulator()
 print "Simulator state (continuous) : ", sim.state
 print "Simulator state (discrete) : ", sim.discrete_state
 
-action1 = [40, 75]
-state, reward = sim.controller(action1)
-print "Simulator state (continuous) : ", sim.state
-print "Simulator state (discrete) : ", sim.discrete_state
-print "Simulator state (discrete) : ", state
-print "Reward : ", reward
+for t in range(10):
+	action = [40, 75]
+	state, reward = sim.controller(action)
+# print "Simulator state (continuous) : ", sim.state
+# print "Simulator state (discrete) : ", sim.discrete_state
+# print "Simulator state (discrete) : ", state
+# print "Reward : ", reward
 
-action1 = [50, 150]
-state, reward = sim.controller(action1)
-print "Simulator state (continuous) : ", sim.state
-print "Simulator state (discrete) : ", sim.discrete_state
-print "Simulator state (discrete) : ", state
-print "Reward : ", reward
+# action = [50, 150]
+# state, reward = sim.controller(action)
+# print "Simulator state (continuous) : ", sim.state
+# print "Simulator state (discrete) : ", sim.discrete_state
+# print "Simulator state (discrete) : ", state
+# print "Reward : ", reward
+
+# action = [40, 120]
+# state, reward = sim.controller(action)
+# print "Simulator state (continuous) : ", sim.state
+# print "Simulator state (discrete) : ", sim.discrete_state
+# print "Simulator state (discrete) : ", state
+# print "Reward : ", reward
+
+# action = [30, 100]
+# state, reward = sim.controller(action)
+# print "Simulator state (continuous) : ", sim.state
+# print "Simulator state (discrete) : ", sim.discrete_state
+# print "Simulator state (discrete) : ", state
+# print "Reward : ", reward
+
+sim.create_xy_animation(10)
+# sim.create_xz_animation(10)

@@ -35,12 +35,12 @@ class AirplaneSimulator:
         self.discrete_state = self.get_discrete_state(self.state)
         self.end_state_flag = self.is_end_state(self.state)
         
-        self.xy_images = []
-        self.xz_images = []
+        # self.xy_images = []
+        # self.xz_images = []
 
         # add initial state to animation
-        self.create_xy_image()
-        self.create_xz_image()
+        # self.create_xy_image()
+        # self.create_xz_image()
 
         with open('states_visited.txt', 'w+') as f:
             output_data = [str(value) for value in self.state]
@@ -417,8 +417,8 @@ class AirplaneSimulator:
         self.update_state(action)
         
         # Create image associated with this new state, for animation
-        self.create_xy_image()
-        self.create_xz_image()
+        # self.create_xy_image()
+        # self.create_xz_image()
 
         # Compute reward
         reward = self.get_reward(current_state, self.state)

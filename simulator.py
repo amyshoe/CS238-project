@@ -417,8 +417,8 @@ class AirplaneSimulator:
         self.update_state(action)
         
         # Create image associated with this new state, for animation
-        # self.create_xy_image()
-        # self.create_xz_image()
+        #self.create_xy_image()
+        #self.create_xz_image()
 
         # Compute reward
         reward = self.get_reward(current_state, self.state)

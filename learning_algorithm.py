@@ -28,7 +28,15 @@ def featureExtractor(state,action):
     Takes in (state,action) 
     Returns a list of (key,value) pairs
     """
-    return [((tuple(state),tuple(action)),1)]
+    features = []
+    print state
+    for key in state:
+        print key
+        features.append((key,1))
+    #t, y, z, v_y, v_z, v_w = state
+    return features
+
+    #return [((tuple(state),tuple(action)),1)]
 
 
 ##Exploratory strategy
@@ -60,7 +68,7 @@ def epsilon_greedy(action,possible_actions,num_iter):
 Actions = [] 
 W = collections.defaultdict(float)
 ##currently does not run anything
-maxIters = 2
+maxIters = 1000
 discount = 0.95
 for num_iter in xrange(1,maxIters):
     print "Iteration #", num_iter
@@ -73,7 +81,7 @@ for num_iter in xrange(1,maxIters):
     state = sim.get_discrete_state(sim.state)
     while not sim.end_state_flag:
         #state = sim.get_state()
-        print "Running at time step:!", state[0]
+        print "state is:", state
         possible_actions = sim.get_action_list()
         best_action = None
         best_val = None
@@ -127,6 +135,20 @@ for num_iter in xrange(1,maxIters):
         for (key,value) in phis:
             W[key] += -step_size*(best_val  - discount*(reward + best_val)*value)
         state = new_state
+    final_state_analysis = sim.plane_state_analysis(sim.state)
+    if final_state_analysis[2] == True:
+        print "Landed safely"
+    elif final_state_analysis[0] == True:
+        print "Crashed"
+    elif final_state_analysis[1] == True:
+        print "Outside radar"
+    elif final_state_analysis[3] == True:
+        print "missed the landing!!"
+    else:
+        print "WTF!!!!!!!!!!!!!!!!"
+    print sim.state
+
+
 
     print "It took about",(time.time() - startTime)
 print "Done with Q-learning"

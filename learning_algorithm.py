@@ -17,9 +17,10 @@ def sparseProduct(phi,w):
     #print "phi is:", phi
     #print "w is :", w
     out = 0.0
-
+    #print "The dict is:", w
+    #print "The vector phi is:", phi
     for (key,val) in phi:
-        out += val * w[tuple(key)]
+        out += val * w[key]
     return out 
 
 ##extracting particular features
@@ -29,14 +30,30 @@ def featureExtractor(state,action):
     Returns a list of (key,value) pairs
     """
     features = []
-    print state
+    #print state
+    ## Identity features over each of the state
+    idx = 0
     for key in state:
-        print key
-        features.append((key,1))
+        #print key
+        new_key = (idx,key)
+        if idx == 1: ##y key
+            new_key = (idx,int(key/4))
+        features.append((new_key,1))
+        idx += 1
     #t, y, z, v_y, v_z, v_w = state
+
+    ##Interaction terms for (Vy,t,)
     return features
 
     #return [((tuple(state),tuple(action)),1)]
+
+def linear_approximation(Q,state,action):
+    """
+    Does Linear Approximation for the given state and action
+    Returns the Q-value
+    """
+    ##Get some form of estimate for some number of positions next to it
+    return 0
 
 
 ##Exploratory strategy
@@ -68,8 +85,9 @@ def epsilon_greedy(action,possible_actions,num_iter):
 Actions = [] 
 W = collections.defaultdict(float)
 ##currently does not run anything
-maxIters = 1000
+maxIters = 20
 discount = 0.95
+minTime = 1000
 for num_iter in xrange(1,maxIters):
     print "Iteration #", num_iter
     sim = simulator.AirplaneSimulator()
@@ -88,6 +106,7 @@ for num_iter in xrange(1,maxIters):
         #print "the length of possible_actions:", len(possible_actions)
 
         #print "The state is:", state
+        ##compute the best possible action
         for action in possible_actions:
             #print "Considering :", action
             phis = featureExtractor(state,action)
@@ -95,18 +114,20 @@ for num_iter in xrange(1,maxIters):
             if val > best_val:
                 best_val = val
                 best_action = action
-        final_action = epsilon_greedy(action, possible_actions, num_iter)
+        final_action = epsilon_greedy(best_action, possible_actions, num_iter)
         #print "Midway in the code!"
         ##the features of the old state
+        print "The action it takes is:", final_action
         old_phis = featureExtractor(state,final_action)
 
         ##the Q(s,a) value at the state
         val = sparseProduct(old_phis,W)
+        old_val = val
 
         ##Get the new_state, and the reward assosciated with the transitioning
         (new_state, reward) = sim.controller(final_action)
         #print "the new state is:", new_state
-        #print "the reward is:", reward
+        print "the reward is:", reward
 
         ##possible actions from the new state
         possible_actions = sim.get_action_list()
@@ -130,12 +151,17 @@ for num_iter in xrange(1,maxIters):
                 new_best_val = val
                 new_best_action = action
                 new_best_phis = phis
-
+        ## Note its  (s,a,r,s',max a) update
         ##update: w(s,a) --> w(s,a) - step_size*(Q(s,a) - gamma*(r+max Q(s',a'))) * beta(s,a)
         for (key,value) in phis:
-            W[key] += -step_size*(best_val  - discount*(reward + best_val)*value)
+            W[key] += -step_size*(old_val  - discount*(reward + new_best_val)*value)
+
+        ##Update the current state info
         state = new_state
     final_state_analysis = sim.plane_state_analysis(sim.state)
+    if sim.state[0] < minTime:
+        minTime = sim.state[0]
+
     if final_state_analysis[2] == True:
         print "Landed safely"
     elif final_state_analysis[0] == True:
@@ -150,6 +176,9 @@ for num_iter in xrange(1,maxIters):
 
 
 
+
     print "It took about",(time.time() - startTime)
 print "Done with Q-learning"
+print "The Q weights states are:", W
+print "The longest it has stayed is:", minTime
                 

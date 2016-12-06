@@ -58,7 +58,7 @@ def q_learning(w, gam, iter, s_0):
   alpha = .01/iter
   s = s_0
   while not sim.end_state_flag:
-    print "State is: ", s
+    # print "State is: ", s
     possible_actions = sim.get_action_list()
     
     # check if we've reached an end state, if so, terminate
@@ -133,6 +133,11 @@ if __name__ == '__main__':
     # Report time
     print "It took about",(time.time() - startTime)
 
+  with open('weights_found.txt', 'w+') as f:
+    for key, value in w.items():
+      if value != 0.0:
+        f.write(str(key)+"\t"+str(values)+"\n")
+    
   print "Done with Q-learning"
   # print "The Q weights states are:", w
   print "The longest it has stayed is:", minTime

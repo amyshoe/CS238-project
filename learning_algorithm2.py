@@ -130,13 +130,14 @@ if __name__ == '__main__':
         print "WTF!!!!!!!!!!!!!!!!"
     print sim.state
 
-    # Report time
-    print "It took about",(time.time() - startTime)
-
-  with open('weights_found.txt', 'w+') as f:
+    # Record weights 
+    with open('weights_found.txt', 'w+') as f:
     for key, value in w.items():
       if value != 0.0:
         f.write(str(key)+"\t"+str(values)+"\n")
+
+    # Report time
+    print "It took about",(time.time() - startTime)
     
   print "Done with Q-learning"
   # print "The Q weights states are:", w

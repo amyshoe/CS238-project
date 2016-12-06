@@ -33,16 +33,16 @@ def featureExtractor(state,action):
     #print state
     ## Identity features over each of the state
     idx = 0
-    for key in state:
+    for val in state:
         #print key
-        new_key = (idx,key)
-        if idx == 1: ##y key
-            new_key = (idx,int(key/4))
-        features.append((new_key,1))
+        # new_key = (idx,key)
+        #if idx == 1: ##y key
+        #   new_key = (idx,int(key/4))
+        features.append((idx,val))
         idx += 1
     #t, y, z, v_y, v_z, v_w = state
 
-    ##Interaction terms for (Vy,t,)
+    #Interaction terms for (Vy,t,)
     return features
 
     #return [((tuple(state),tuple(action)),1)]
@@ -68,7 +68,7 @@ def epsilon_greedy(action,possible_actions,num_iter):
 
     Returns an action based upon the exploratory strategy
     """
-    eps = 1/num_iter
+    eps = 0.1/num_iter
     #print "possible actions are:",possible_actions
     #print "action, num_iter", action,num_iter
     if eps > np.random.uniform(0,1):
@@ -95,7 +95,7 @@ for num_iter in xrange(1,maxIters):
     #print "Iteration #", num_iter
 
     ##Learning Rate more intelligently
-    step_size = 1.0/(num_iter+1)
+    step_size = 0.1/(num_iter+1)
     state = sim.get_discrete_state(sim.state)
     while not sim.end_state_flag:
         #state = sim.get_state()
@@ -108,16 +108,21 @@ for num_iter in xrange(1,maxIters):
         #print "The state is:", state
         ##compute the best possible action
         for action in possible_actions:
-            #print "Considering :", action
+            # print "Considering :", action
             phis = featureExtractor(state,action)
             val = sparseProduct(phis,W)
+            # print "\t\tVAL:", val
             if val > best_val:
                 best_val = val
+                print "BEST VAL", best_val
                 best_action = action
+        print "Best action is: ", best_action
         final_action = epsilon_greedy(best_action, possible_actions, num_iter)
+        print "Chosen action is: ", final_action
         #print "Midway in the code!"
         ##the features of the old state
         print "The action it takes is:", final_action
+        print "The continuous version of action:", sim.get_continuous_action(final_action)
         old_phis = featureExtractor(state,final_action)
 
         ##the Q(s,a) value at the state
@@ -154,7 +159,7 @@ for num_iter in xrange(1,maxIters):
         ## Note its  (s,a,r,s',max a) update
         ##update: w(s,a) --> w(s,a) - step_size*(Q(s,a) - gamma*(r+max Q(s',a'))) * beta(s,a)
         for (key,value) in phis:
-            W[key] += -step_size*(old_val  - discount*(reward + new_best_val)*value)
+            W[key] += -step_size*(old_val  - discount*(reward + new_best_val)*value) 
 
         ##Update the current state info
         state = new_state

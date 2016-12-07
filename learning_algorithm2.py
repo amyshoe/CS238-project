@@ -91,7 +91,7 @@ def q_learning(w, gam, iter, s_0):
     for f in feature_inds:
       # print "feature being updated: ", f
       # print "\t with val", alpha * delta
-      w[(f, a)] += alpha * delta
+      w[f] += alpha * delta
     s = next_s
 
 
@@ -99,11 +99,11 @@ def q_learning(w, gam, iter, s_0):
 if __name__ == '__main__':
 
   # parameters
-  maxIters = 100
+  maxIters = 10
   discount = 0.95
   minTime = 1000
-  warmStart_FLAG = True
-  file_name = "weights_found2.txt"
+  warmStart_FLAG = False
+  file_name = "weights_found.txt"
   # start with empty weights vector
   if warmStart_FLAG:
     print "Reading weights from the file"
@@ -140,9 +140,10 @@ if __name__ == '__main__':
 
     # Record weights 
     print "Writing the weights to file!"
-    if num_iter %50 == 0: ##Write after every 50 iterations!
+    if num_iter % 5 == 0: ##Write after every 50 iterations!
       with open(file_name, 'wb') as handle:
         pickle.dump(w, handle)  
+      warmStart_FLAG = True
 
     # Report time
     print "It took about",(time.time() - startTime)

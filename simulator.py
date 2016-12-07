@@ -8,7 +8,7 @@ class AirplaneSimulator:
     '''
     This is the airplane simulator class
     '''
-    def __init__(self):
+    def __init__(self, dim = 2, init_discrete_state = []):
         '''
         This is the constructor function.
         The bounds, bin size and number of bins parameters are initialized for state and action.
@@ -25,9 +25,21 @@ class AirplaneSimulator:
         self.total_bins_states = self.get_state_total_bins()
         self.total_bins_actions = self.get_action_total_bins()
         
-        self.state = self.create_initial_state()
-        self.discrete_state = self.get_discrete_state(self.state)
-        self.end_state_flag = self.is_end_state(self.state)
+        if dim == 2:
+            if init_discrete_state == []:
+                self.state = self.create_initial_state()
+                self.discrete_state = self.get_discrete_state(self.state)
+                self.end_state_flag = self.is_end_state(self.state)
+            else:
+                self.discrete_state = init_discrete_state
+                self.state = self.get_continuous_state(self.discrete_state)
+                self.end_state_flag = self.is_end_state(self.state)
+                
+        elif dim == 1:
+            self.state = self.create_initial_state_motion_y(init_discrete_state)
+            self.discrete_state = self.get_discrete_state(self.state)
+            self.end_state_flag = self.is_end_state(self.state)
+                
 
         with open('states_visited.txt', 'w+') as f:
             output_data = [str(value) for value in self.state]
@@ -150,9 +162,6 @@ class AirplaneSimulator:
         # Check if y < Y_MIN or y > Y_MAX or z > Z_MAX
         if y < Const.Y_MIN or y > Const.Y_MAX or z > Const.Z_MAX:
             plane_outside_radar = True
-            print "\ttoo high: ", z > Const.Z_MAX
-            print "\ttoo left: ", y < Const.Y_MIN
-            print "\ttoo right: ", y > Const.Y_MAX
         else:
             plane_outside_radar = False
         
@@ -275,21 +284,15 @@ class AirplaneSimulator:
             
             # Name elements in action variable for readability
             delta_vy, delta_vz = action[0], action[1]
-            # print "ACTION TAKEN DELTA VY: ", delta_vy
+            
             # Update state variables
             next_t = t - Const.BIN_SIZE_T
             next_y = y + v_y * Const.BIN_SIZE_T / 3600.0
-            # print "PREV Y: ", y
-            # print "\t VY: ", v_y
-            # print "\t\t NEXT Y", next_y
+            
             next_z = z + v_z * Const.BIN_SIZE_T / 3600.0
             wind_effect = 0.01 * (v_w**2) * self.sign_real(v_w)
             next_v_y = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
-            # print "PREV VY: ", v_y
-            # print "\t Delt VY: ", delta_vy
-            # print "\t wind: ", v_w
-            # print "\t wind effect: ", wind_effect
-            # print "\t\t NEXT VY", next_v_y
+            
             next_v_z = v_z + delta_vz * Const.BIN_SIZE_T
             next_v_w_mean = v_w 
             next_v_w = random.normalvariate(next_v_w_mean, Const.VW_SIGMA)
@@ -408,6 +411,76 @@ class AirplaneSimulator:
             - Compute the reward
             - Return new discrete state, reward
         '''
+        # Convert discrete action to continuous action, and snap to bounds
+        action = self.get_continuous_action(discrete_action)
+        for i, actions in enumerate(action):
+            self.snap_to_bounds(actions, self.min_bounds_actions[i], self.max_bounds_actions[i])
+            
+        # Record current state & update the state
+        current_state = self.state
+        self.update_state(action)
+
+        # Compute reward
+        reward = self.get_reward(current_state, self.state)
+        
+        # Return new discrete state and controller
+        return self.discrete_state, reward
+        
+    ###########################################################################
+    """
+    For this section we assume that the vertical velocity is fixed. We always choose
+    an action in the Z direction that implies delta_vz = 0.0
+    The simplificatiion with this assumption is that we only need to control the
+    motion in the Y direction
+    """
+    def create_initial_state_motion_y(self, init_discrete_state):
+        '''
+        Method to initialize the starting state
+        init_discrete_state is a list of discrete states [t, y, vy, vw]
+        '''        
+        # Generate wind directions randomly
+        if random.uniform(0, 1) < 0.5:
+            f = -1
+        else:
+            f = 1
+        
+        if init_discrete_state == []:
+            return [Const.START_T , Const.START_Y, (Const.Z_MIN + Const.BIN_SIZE_Z / 2.0), \
+                    Const.START_VY, 0.0, f * Const.START_VW]
+        else:
+            discrete_state = [init_discrete_state[0], init_discrete_state[1], 0, \
+                              init_discrete_state[2], 0, init_discrete_state[3]]
+            state = self.get_continuous_state(discrete_state)
+            
+            return [state[0] , state[1], (Const.Z_MIN + Const.BIN_SIZE_Z / 2.0), \
+                    state[3], 0.0, f * state[5]]
+                
+    def get_action_list_motion_y(self):
+        ''' 
+        Method to return discrete action list for only y motion.
+        If simulator is in an end state, return None
+        If simulator is not in an end state, return all possible actions
+        '''
+        if self.is_end_state(self.state) == True:
+            return None
+        else:
+            discrete_action_list_motion_y = [a1 for a1 in range(self.total_bins_actions[0])]
+            return discrete_action_list_motion_y
+            
+    def controller_motion_y(self, discrete_action_motion_y):
+        '''
+        Method that takes as input discrete action : discrete_action_motion_y
+        Outside entities should update the class objects through this method.
+        The following steps are performed:
+            - Convert discrete_action_motion_y into continuous action
+            - Update the state, discrete state
+            - Compute the reward
+            - Return new discrete state, reward
+        '''
+        # Create discrete_action from discrete_action_motion_y
+        # Z action is 0.0
+        discrete_action = [discrete_action_motion_y, int((Const.BINS_DELTA_VZ - 1) / 2.0)]
+        
         # Convert discrete action to continuous action, and snap to bounds
         action = self.get_continuous_action(discrete_action)
         for i, actions in enumerate(action):

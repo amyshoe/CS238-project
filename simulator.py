@@ -494,4 +494,6 @@ class AirplaneSimulator:
         reward = self.get_reward(current_state, self.state)
         
         # Return new discrete state and controller
-        return self.discrete_state, reward
+        discrete_state = [self.discrete_state[0], self.discrete_state[1], \
+                          self.discrete_state[3], self.discrete_state[5]]
+        return discrete_state, reward

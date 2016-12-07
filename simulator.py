@@ -453,7 +453,7 @@ class AirplaneSimulator:
             state = self.get_continuous_state(discrete_state)
             
             return [state[0] , state[1], (Const.Z_MIN + Const.BIN_SIZE_Z / 2.0), \
-                    state[3], 0.0, f * state[5]]
+                    state[3], 0.0, state[5]]
                 
     def get_action_list_motion_y(self):
         ''' 

@@ -103,11 +103,19 @@ def q_learning(w, gam, iter, s_0):
 if __name__ == '__main__':
 
   # parameters
+<<<<<<< HEAD
   maxIters = 1002
   discount = 0.95
   minTime = 1000
   warmStart_FLAG = True
   file_name = "weights_found3.txt"
+=======
+  maxIters = 10
+  discount = 0.95
+  minTime = 1000
+  warmStart_FLAG = False
+  file_name = "weights_found.txt"
+>>>>>>> 8974b82b66dd0937d465468a0b8b2375e1aef14f
   # start with empty weights vector
   if warmStart_FLAG:
     print "Reading weights from the file"
@@ -147,6 +155,7 @@ if __name__ == '__main__':
       print "Writing the weights to file!"
       with open(file_name, 'wb') as handle:
         pickle.dump(w, handle)  
+      warmStart_FLAG = True
 
     # Report time
     print "It took about",(time.time() - startTime)

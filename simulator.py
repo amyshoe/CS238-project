@@ -4,12 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import matplotlib.image as mgimg
 
-# TODO:  decide if we want the log to look nice (i.e., decide on #sigfig convention)
-# Amy responible for the method record_state
-# Amy write nice comments for the code
-# Discuss "get_continuous_state" method with team
-# Amy, Sagar to check logic of method "plane_state_analysis"
-
 class AirplaneSimulator:
     '''
     This is the airplane simulator class
@@ -34,13 +28,6 @@ class AirplaneSimulator:
         self.state = self.create_initial_state()
         self.discrete_state = self.get_discrete_state(self.state)
         self.end_state_flag = self.is_end_state(self.state)
-        
-        # self.xy_images = []
-        # self.xz_images = []
-
-        # add initial state to animation
-        # self.create_xy_image()
-        # self.create_xz_image()
 
         with open('states_visited.txt', 'w+') as f:
             output_data = [str(value) for value in self.state]
@@ -291,7 +278,8 @@ class AirplaneSimulator:
             wind_effect = 0.01 * (v_w**2) * self.sign_real(v_w)
             next_v_y = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
             next_v_z = v_z + delta_vz * Const.BIN_SIZE_T
-            next_v_w = random.normalvariate(v_w, Const.VW_SIGMA)
+            next_v_w_mean = v_w 
+            next_v_w = random.normalvariate(next_v_w_mean, Const.VW_SIGMA)
             
             # Bound state variables for v_w to avoid very high values
             self.snap_to_bounds(next_v_w, Const.VW_MIN, Const.VW_MAX)
@@ -415,101 +403,9 @@ class AirplaneSimulator:
         # Record current state & update the state
         current_state = self.state
         self.update_state(action)
-        
-        # Create image associated with this new state, for animation
-        #self.create_xy_image()
-        #self.create_xz_image()
 
         # Compute reward
         reward = self.get_reward(current_state, self.state)
         
         # Return new discrete state and controller
         return self.discrete_state, reward
-
-    def create_xy_image(self):
-        '''
-        Creates a single image plotting the plane's current xy position 
-        '''
-        # name discrete state variables for readability
-        t, y, z, v_y, v_z, v_w = self.get_discrete_state(self.state)
-
-        plt.figure()
-        plt.xlim(Const.BINS_T, 0)
-        plt.ylim(0, Const.BINS_Y)
-        self.xy_images.append(plt.plot(t, y, 'r^'))
-
-        plt.plot(t, y, 'r^')
-        # plt.show()
-        plt_filename = "xy_plots/xy-" + str(t) + ".png"
-        plt.savefig(plt_filename)
-
-    def create_xz_image(self):
-        '''
-        Creates a single image plotting the plane's current xz position 
-        '''
-        # name discrete state variables for readability
-        t, y, z, v_y, v_z, v_w = self.get_discrete_state(self.state)
-
-        plt.figure()
-        plt.xlim(Const.BINS_T, 0)
-        plt.ylim(0, Const.BINS_Z)
-        self.xz_images.append(plt.plot(t, z, 'g^'))
-
-        plt.plot(t, z, 'g^')
-        # plt.show()
-        plt_filename = "xz_plots/xz-" + str(t) + ".png"
-        plt.savefig(plt_filename)
-
-    def create_xy_animation(self, num_frames):
-        '''
-        Creates an animation of the lateral trajectory during plane's latest run 
-        '''
-
-        fig = plt.figure()
-        my_images = []
-
-        #loops through the pngs
-        for time in range(275, 275-num_frames+1, -1):
-
-            # Read in picture
-            filename = "xy_plots/xy-" + str(time) + ".png"
-            img = mgimg.imread(filename)
-            imgplot = plt.imshow(img)
-
-            # append AxesImage object to the list
-            my_images.append([imgplot])
-
-        # create an instance of animation
-        my_anim = animation.ArtistAnimation(fig, my_images, interval=50, blit=False, repeat_delay=5000)
-
-        ## TODO: The 'save' method isn't working....
-        # my_anim.save("xz_animation.mp4")
-        plt.show()
-
-
-    def create_xz_animation(self, num_frames):
-
-        fig = plt.figure()
-        my_images = []
-
-        #loops through the pngs
-        for time in range(275, 275-num_frames+1, -1):
-
-            # Read in picture
-            filename = "xz_plots/xz-" + str(time) + ".png"
-            img = mgimg.imread(filename)
-            imgplot = plt.imshow(img)
-
-            # append AxesImage object to the list
-            my_images.append([imgplot])
-
-        # create an instance of animation
-        my_anim = animation.ArtistAnimation(fig, my_images, interval=50, blit=False, repeat_delay=5000)
-
-        ## TODO: The 'save' method isn't working....
-        # my_anim.save("xz_animation.mp4")
-        plt.show()
-
-
-
-        

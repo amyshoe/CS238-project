@@ -51,7 +51,10 @@ class AirplaneSimulator:
         Method to initialize the starting state
         '''        
         # Generate wind directions randomly
-        f = -1 if random.uniform(0, 1) < 0.5 else 1
+        if random.uniform(0, 1) < 0.5:
+            f = -1
+        else:
+            f = 1
         return [Const.START_T , Const.START_Y, Const.START_Z, \
                 Const.START_VY, Const.START_VZ, f * Const.START_VW]
     
@@ -118,7 +121,6 @@ class AirplaneSimulator:
         else:
             plane_outside_radar, plane_crash, plane_land, plane_missed_landing\
                 = self.plane_state_analysis(state)
-            
             return plane_outside_radar or plane_crash
             
     def plane_state_analysis(self, state):
@@ -161,6 +163,9 @@ class AirplaneSimulator:
         # Check if y < Y_MIN or y > Y_MAX or z > Z_MAX
         if y < Const.Y_MIN or y > Const.Y_MAX or z > Const.Z_MAX:
             plane_outside_radar = True
+            print "\ttoo high: ", z > Const.Z_MAX
+            print "\ttoo left: ", y < Const.Y_MIN
+            print "\ttoo right: ", y > Const.Y_MAX
         else:
             plane_outside_radar = False
         
@@ -267,7 +272,7 @@ class AirplaneSimulator:
         if self.is_end_state(self.state) == True:
             return None
         else:
-            discrete_action_list = [[a1, a2] for a1 in range(self.total_bins_actions[0])\
+            discrete_action_list = [(a1, a2) for a1 in range(self.total_bins_actions[0])\
                                     for a2 in range(self.total_bins_actions[1])]
             return discrete_action_list
             
@@ -283,13 +288,21 @@ class AirplaneSimulator:
             
             # Name elements in action variable for readability
             delta_vy, delta_vz = action[0], action[1]
-            
+            # print "ACTION TAKEN DELTA VY: ", delta_vy
             # Update state variables
             next_t = t - Const.BIN_SIZE_T
             next_y = y + v_y * Const.BIN_SIZE_T / 3600.0
+            # print "PREV Y: ", y
+            # print "\t VY: ", v_y
+            # print "\t\t NEXT Y", next_y
             next_z = z + v_z * Const.BIN_SIZE_T / 3600.0
             wind_effect = 0.01 * (v_w**2) * self.sign_real(v_w)
             next_v_y = v_y + (delta_vy + wind_effect) * Const.BIN_SIZE_T
+            # print "PREV VY: ", v_y
+            # print "\t Delt VY: ", delta_vy
+            # print "\t wind: ", v_w
+            # print "\t wind effect: ", wind_effect
+            # print "\t\t NEXT VY", next_v_y
             next_v_z = v_z + delta_vz * Const.BIN_SIZE_T
             next_v_w = random.normalvariate(v_w, Const.VW_SIGMA)
             

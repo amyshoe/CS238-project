@@ -47,7 +47,7 @@ class Const(object):
     
     # Wind parameters
     VW_SIGMA = 1.0           # in km/hr
-    VW = 20.0                # in km/hr
+    VW = 10.0                # in km/hr
     VW_MAX = 25.0            # in km/hr
     VW_MIN = -25.0           # in km/hr
     BIN_SIZE_VW = 1.0        # in km/hr

@@ -43,9 +43,16 @@ def feature_extractor(state,action):
     Returns a list of keys 
     """
     features = []
-    ## Identity features over each of the state
-    for idx, val in enumerate(state):
-        features.append((idx, val, action))
+    t, y, z, v_y, v_z, v_w = state
+    dv_y, dv_z = action
+    dv_y = float(dv_y)/2
+    features.append((1,y,dv_y))
+    # features.append((2,z,dv_z))
+    features.append((3,v_y,dv_y))
+    # features.append((4,z,dv_z))
+    features.append((5,v_w,dv_y))
+    features.append((6,t,dv_y))
+    # features.append((7,t,dv_z))
 
     ##Additional features that might help it along??
     ##how about giving it a cost function based upon
@@ -103,19 +110,11 @@ def q_learning(w, gam, iter, s_0):
 if __name__ == '__main__':
 
   # parameters
-<<<<<<< HEAD
   maxIters = 1002
   discount = 0.95
   minTime = 1000
   warmStart_FLAG = True
-  file_name = "weights_found3.txt"
-=======
-  maxIters = 10
-  discount = 0.95
-  minTime = 1000
-  warmStart_FLAG = False
-  file_name = "weights_found.txt"
->>>>>>> 8974b82b66dd0937d465468a0b8b2375e1aef14f
+  file_name = "weights_found4.txt"
   # start with empty weights vector
   if warmStart_FLAG:
     print "Reading weights from the file"
@@ -155,7 +154,6 @@ if __name__ == '__main__':
       print "Writing the weights to file!"
       with open(file_name, 'wb') as handle:
         pickle.dump(w, handle)  
-      warmStart_FLAG = True
 
     # Report time
     print "It took about",(time.time() - startTime)

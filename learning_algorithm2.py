@@ -2,7 +2,7 @@
 from const import Const
 import numpy as np
 import math, time, collections, random
-import simulator
+import simulator, pickle
 
 def epsilon_greedy(state,possible_actions,num_iter):
     """
@@ -99,12 +99,20 @@ def q_learning(w, gam, iter, s_0):
 if __name__ == '__main__':
 
   # parameters
-  maxIters = 50
+  maxIters = 100
   discount = 0.95
   minTime = 1000
+  warmStart_FLAG = True
+  file_name = "weights_found2.txt"
   # start with empty weights vector
-  w = collections.defaultdict(float)
-
+  if warmStart_FLAG:
+    print "Reading weights from the file"
+    with open(file_name, 'rb') as handle:
+      w = pickle.loads(handle.read())
+    print "Done reading the weights_found"
+  else: 
+    print "Initializing a new dictionary"
+    w = collections.defaultdict(float)
   # run Q learning!!
   for num_iter in xrange(1,maxIters):
     print "Iteration #", num_iter
@@ -131,10 +139,10 @@ if __name__ == '__main__':
     print sim.state
 
     # Record weights 
-    with open('weights_found.txt', 'w+') as f:
-    for key, value in w.items():
-      if value != 0.0:
-        f.write(str(key)+"\t"+str(values)+"\n")
+    print "Writing the weights to file!"
+    if num_iter %50 == 0: ##Write after every 50 iterations!
+      with open(file_name, 'wb') as handle:
+        pickle.dump(w, handle)  
 
     # Report time
     print "It took about",(time.time() - startTime)

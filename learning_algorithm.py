@@ -1,7 +1,7 @@
 from const import Const
 import numpy as np
 import math, time, collections
-import simulator
+import simulator, pickle
 
 ##Sparse product
 def sparseProduct(phi,w):
@@ -34,7 +34,7 @@ def featureExtractor(state,action):
     #print "action passed is ",action    
     dv_y, dv_z = action[0]/5,action[1]/5
     idx = 0
-    for val in state:
+    for key in state:
         #print key
         new_key = (idx,key,"Vel",dv_y)
         new_key2 = (idx,key,"Vel2",dv_z)
@@ -93,9 +93,10 @@ discount = 0.95
 minTime = 1000
 file_name = "random.txt" ##File to read and write weights to and from
 restart_FLAG = True
-if restart_FLAG = True:
+if restart_FLAG == True:
     W = collections.defaultdict(float)
 else:
+    print "Reading weights from the file"
     with open(file_name, 'rb') as handle:
         b = pickle.loads(handle.read())
 for num_iter in xrange(1,maxIters):
@@ -105,7 +106,7 @@ for num_iter in xrange(1,maxIters):
     #print "Iteration #", num_iter
 
     ##Learning Rate more intelligently
-    step_size = 0.1/(num_iter+1)
+    step_size = 0.1
     state = sim.get_discrete_state(sim.state)
     while not sim.end_state_flag:
         #state = sim.get_state()
@@ -121,7 +122,7 @@ for num_iter in xrange(1,maxIters):
             # print "Considering :", action
             phis = featureExtractor(state,action)
             val = sparseProduct(phis,W)
-            # print "\t\tVAL:", val
+            #print "\t\tVAL:", val
             if val > best_val:
                 best_val = val
                 print "BEST VAL", best_val
@@ -135,7 +136,7 @@ for num_iter in xrange(1,maxIters):
         print "The continuous version of action:", sim.get_continuous_action(final_action)
         old_phis = featureExtractor(state,final_action)
 
-        ##the Q(s,a) value at the state
+        ##the Q(s,a) value at the state - stored as old_val
         val = sparseProduct(old_phis,W)
         old_val = val
 
@@ -154,16 +155,17 @@ for num_iter in xrange(1,maxIters):
 
 
         new_best_action = None
-        new_best_val = None
+        new_best_val = None ##Gonna store Q(s',a')
         new_best_phis = None
 
+        ##Compute max Q(s',a')
         for action in possible_actions:
             #print "\n\n\n\nnew state", new_state
             #print "\n\n\n\naction :", action
             phis = featureExtractor(new_state,action)
             val = sparseProduct(phis,W)
             if val > new_best_val:
-                new_best_val = val
+                new_best_val = val ##Gonna store Q(s',a')
                 new_best_action = action
                 new_best_phis = phis
         ## Note its  (s,a,r,s',max a) update
@@ -190,12 +192,15 @@ for num_iter in xrange(1,maxIters):
     print sim.state
 
 
+    print "Writing the weights to file!"
+    with open(file_name, 'wb') as handle:
+        pickle.dump(W, handle)
+
+
+
 
 
     print "It took about",(time.time() - startTime)
-print "Writing the weights to file!"
-with open(file_name, 'wb') as handle:
-    pickle.dump(W, handle)
 print "Done with Q-learning"
 print "The Q weights states are:", W
 print "The longest it has stayed is:", minTime

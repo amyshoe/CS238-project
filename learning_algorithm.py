@@ -30,15 +30,18 @@ def featureExtractor(state,action):
     Returns a list of (key,value) pairs
     """
     features = []
-    #print state
     ## Identity features over each of the state
+    #print "action passed is ",action    
+    dv_y, dv_z = action[0]/5,action[1]/5
     idx = 0
     for key in state:
         #print key
-        new_key = (idx,key)
+        new_key = (idx,key,"Vel",dv_y)
+        new_key2 = (idx,key,"Vel2",dv_z)
         if idx == 1: ##y key
-            new_key = (idx,int(key/4))
+            new_key = (idx,int(key/4),"Vel",dv_y)
         features.append((new_key,1))
+        features.append((new_key2,1))
         idx += 1
     #t, y, z, v_y, v_z, v_w = state
 
@@ -53,6 +56,7 @@ def linear_approximation(Q,state,action):
     Returns the Q-value
     """
     ##Get some form of estimate for some number of positions next to it
+    ## NOT BEING USED YET
     return 0
 
 
@@ -83,11 +87,17 @@ def epsilon_greedy(action,possible_actions,num_iter):
 # We might have the get possible actions from the simulator itself. Might make sense,
 # because there are some states from which we might have only certain allowed actions
 Actions = [] 
-W = collections.defaultdict(float)
 ##currently does not run anything
 maxIters = 20
 discount = 0.95
 minTime = 1000
+file_name = "random.txt" ##File to read and write weights to and from
+restart_FLAG = True
+if restart_FLAG = True:
+    W = collections.defaultdict(float)
+else:
+    with open(file_name, 'rb') as handle:
+        b = pickle.loads(handle.read())
 for num_iter in xrange(1,maxIters):
     print "Iteration #", num_iter
     sim = simulator.AirplaneSimulator()
@@ -178,6 +188,9 @@ for num_iter in xrange(1,maxIters):
 
 
     print "It took about",(time.time() - startTime)
+print "Writing the weights to file!"
+with open(file_name, 'wb') as handle:
+    pickle.dump(W, handle)
 print "Done with Q-learning"
 print "The Q weights states are:", W
 print "The longest it has stayed is:", minTime

@@ -53,7 +53,7 @@ def feature_extractor(state,action):
     ##Another interesting feature 
     x = (float(Const.X_MAX) /Const.T_MAX) * t
     theta = int(abs(np.arctan(y/x) * 180.0/np.pi))
-    
+
     ##the modified states
     y = int(float(y)/bin_y)
     action = float(action)/bin_action
@@ -76,9 +76,10 @@ def compute_Q(w, features):
 def q_learning(w, gam, iter, s_0):
   alpha = .01
   s = s_0
+  print "state is:", s
   while not sim.end_state_flag:
     # print "State is: ", s
-    possible_actions = sim.get_action_list()
+    possible_actions = sim.get_action_list_motion_y()
     
     # check if we've reached an end state, if so, terminate
     if possible_actions == None:
@@ -87,7 +88,7 @@ def q_learning(w, gam, iter, s_0):
 
     # get relevant variables
     a = epsilon_greedy(s, possible_actions, num_iter)
-    next_s, r = sim.controller(a)
+    next_s, r = sim.controller_motion_y(a)
 
     # Compute Q(s,a)
     feature_inds = feature_extractor(s, a)
@@ -141,7 +142,9 @@ if __name__ == '__main__':
   for num_iter in xrange(1,maxIters):
     print "Iteration #", num_iter
     # Start new simulation
-    sim = simulator.AirplaneSimulator()
+    sim = simulator.AirplaneSimulator(dim = 1)
+    sim.create_intial_state_motion_y([t_start,y_start, vy_start,vw_start])
+
     startTime = time.time()
     state = sim.get_discrete_state(sim.state)
     q_learning(w, discount, num_iter, state)

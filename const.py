@@ -27,7 +27,7 @@ class Const(object):
     VY_MIN = -50.0           # in km/hr
     VY_MAX = 50.0            # in km/hr
     BIN_SIZE_VY = 1.0        # in km/hr
-    BINS_VY = 100
+    BINS_VY = 100 
     
     VZ_MIN = -20.0           # in km/hr
     VZ_MAX = 20.0            # in km/hr

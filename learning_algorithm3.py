@@ -43,20 +43,28 @@ def feature_extractor(state,action):
     Returns a list of keys 
     """
     features = []
-    t, y, z, v_y, v_z, v_w = state
-    dv_y, dv_z = action
-    dv_y = float(dv_y)/2
-    features.append((1,y,dv_y))
-    # features.append((2,z,dv_z))
-    features.append((3,v_y,dv_y))
-    # features.append((4,z,dv_z))
-    features.append((5,v_w,dv_y))
-    features.append((6,t,dv_y))
-    # features.append((7,t,dv_z))
+    t, y, v_y,v_w = state
 
-    ##Additional features that might help it along??
-    ##how about giving it a cost function based upon
-    ##the next state that it is gonna visit
+    ##The amount of coarseness for each of the features
+    bin_y = 2
+    bin_vy = 4
+    bin_action = 2
+
+    ##Another interesting feature 
+    x = (float(Const.X_MAX) /Const.T_MAX) * t
+    theta = int(abs(np.arctan(y/x) * 180.0/np.pi))
+
+    ##the modified states
+    y = int(float(y)/bin_y)
+    action = float(action)/bin_action
+    v_y = int(float(v_y)/bin_vy) 
+
+    ##rewriting state
+    state = (t, y, v_y,v_w) 
+
+    for idx,val in enumerate(state):
+      features.append((idx,val,action))
+    features.append(("theta",theta,action))
     return features
 
 def compute_Q(w, features):
@@ -68,9 +76,10 @@ def compute_Q(w, features):
 def q_learning(w, gam, iter, s_0):
   alpha = .01
   s = s_0
+  print "state is:", s
   while not sim.end_state_flag:
     # print "State is: ", s
-    possible_actions = sim.get_action_list()
+    possible_actions = sim.get_action_list_motion_y()
     
     # check if we've reached an end state, if so, terminate
     if possible_actions == None:
@@ -79,7 +88,7 @@ def q_learning(w, gam, iter, s_0):
 
     # get relevant variables
     a = epsilon_greedy(s, possible_actions, num_iter)
-    next_s, r = sim.controller(a)
+    next_s, r = sim.controller_motion_y(a)
 
     # Compute Q(s,a)
     feature_inds = feature_extractor(s, a)
@@ -115,6 +124,11 @@ if __name__ == '__main__':
   minTime = 1000
   warmStart_FLAG = True
   file_name = "weights_found4.txt"
+  t_start = 10
+  y_start = int(Const.BINS_Y/2.0)
+  vy_start = int(Const.BINS_VY/2.0)
+  vw_start = Const.BINS_VW
+  startState = ()
   # start with empty weights vector
   if warmStart_FLAG:
     print "Reading weights from the file"
@@ -128,7 +142,9 @@ if __name__ == '__main__':
   for num_iter in xrange(1,maxIters):
     print "Iteration #", num_iter
     # Start new simulation
-    sim = simulator.AirplaneSimulator()
+    sim = simulator.AirplaneSimulator(dim = 1)
+    sim.create_intial_state_motion_y([t_start,y_start, vy_start,vw_start])
+
     startTime = time.time()
     state = sim.get_discrete_state(sim.state)
     q_learning(w, discount, num_iter, state)

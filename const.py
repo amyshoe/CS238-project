@@ -47,7 +47,7 @@ class Const(object):
     VZ_LAND_TOL_MIN = -15.0                                                    # in km/hr
     
     # Wind parameters
-    VW_SIGMA = 1.0                                                             # in km/hr
+    VW_SIGMA = 2.0                                                             # in km/hr
     VW = 10.0                                                                  # in km/hr
     VW_MAX = 25.0                                                              # in km/hr
     VW_MIN = -25.0                                                             # in km/hr
@@ -76,6 +76,7 @@ class Const(object):
     START_VW = VW                                                              # in km/hr
     
     # Set the penalty parameters here
+    LANDING_REWARD = 1e6
     PENALTY_CRASH = -1e3
     PENALTY_OUTSIDE_RADAR = -1e3
     PENALTY_MISSED_LANDING = -1e3

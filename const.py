@@ -65,19 +65,19 @@ class Const(object):
     DELTA_VY_MAX = 35.0                                                        # in km/hr/s
     DELTA_VY_MIN = -35.0                                                       # in km/hr/s
     BINS_DELTA_VY = 201                                                        # number of bins in DELTA_VY
-    BIN_SIZE_DELTA_VY = (DELTA_VY_MAX - DELTA_VY_MIN) / BINS_DELTA_VY          # in km/hr/s                                 # in km/hr/s
+    BIN_SIZE_DELTA_VY = (DELTA_VY_MAX - DELTA_VY_MIN) / BINS_DELTA_VY          # in km/hr/s
     
     # Set the simulation starting parameters here
     START_T = T_MAX                                                            # in sec
     START_Y = 0.0                                                              # in km
     START_Z = Z_MAX                                                            # in km
     START_VY = 0.0                                                             # in km/hr
-    START_VZ = -13.0                                                          # in km/hr
+    START_VZ = -13.0                                                           # in km/hr
     START_VW = VW                                                              # in km/hr
     
     # Set the penalty parameters here
-    PENALTY_CRASH = -1e-3
-    PENALTY_OUTSIDE_RADAR = -1e-3
-    PENALTY_MISSED_LANDING = -1e-3
-    PENALTY_DV = -10
-    PENALTY_RUNWAY = -1e-3
+    PENALTY_CRASH = -1e4
+    PENALTY_OUTSIDE_RADAR = -1e4
+    PENALTY_MISSED_LANDING = -1e4
+    PENALTY_DV = -0.1
+    PENALTY_RUNWAY = -1e4

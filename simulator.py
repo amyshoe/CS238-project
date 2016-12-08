@@ -535,7 +535,7 @@ class AirplaneSimulator:
         for i, actions in enumerate(action):
             self.snap_to_bounds(actions, self.min_bounds_actions[i], self.max_bounds_actions[i])
             
-        # Record current state & update the state
+        # Record current state, update the state and get next state
         current_state = self.state
         self.update_state(action)
 
@@ -547,66 +547,3 @@ class AirplaneSimulator:
                           self.discrete_state[3], self.discrete_state[5]]
         return discrete_state, reward
         
-    def get_reward(self, state, next_state):
-        '''
-        Method that takes as input continuous states : state(s), next_state(s')
-        Returns the reward for (s,s')
-        '''
-        # Name elements in state variables for readability
-        t, y, z, v_y, v_z, v_w = state
-        next_t, next_y, next_z, next_v_y, next_v_z, next_v_w = next_state
-        
-        # Check if initial state is crash / outside radar / missed landing
-        # If yes, return None
-        plane_outside_radar, plane_crash, plane_land, plane_missed_landing \
-            = self.plane_state_analysis(state)
-            
-        if plane_outside_radar == True or plane_crash == True \
-            or plane_missed_landing == True or plane_land == True:
-            print "Control never reaches here - plane already outside radar / crashed / landed / missed landing."
-            return None
-        
-        def penalty_dv(vy1, vy2, vz1, vz2):
-            '''
-            Method to calculate penalty due to change in velocity
-            '''
-            # Calculate magnitude of change in velocity
-            dv = math.sqrt((vy1 - vy2)**2.0 + (vz1 - vz2)**2.0)
-            return Const.PENALTY_DV * math.pow(dv, 2)
-        
-        p_dv = penalty_dv(v_y, next_v_y, v_z, next_v_z)
-        
-        # Check if next state is crash / outside radar / missed landing
-        # If yes, return high penalty
-        plane_outside_radar, plane_crash, plane_land, plane_missed_landing \
-            = self.plane_state_analysis(next_state)
-        if plane_outside_radar == True:
-            p_outside_radar = Const.PENALTY_OUTSIDE_RADAR
-        else:
-            p_outside_radar = 0.0
-
-        if plane_crash == True:
-            p_crash = Const.PENALTY_CRASH
-        else:
-            p_crash = 0.0
-
-        if plane_missed_landing == True:
-            p_missed_landing = Const.PENALTY_MISSED_LANDING
-        else:
-            p_missed_landing = 0.0
-
-        if plane_outside_radar or plane_crash or plane_missed_landing:
-            return p_dv + p_outside_radar + p_crash + p_missed_landing
-        
-        # Check if next_t != T_MIN - Not ended
-        if next_t > Const.T_MIN:
-            return p_dv
-        # Otherwise need to check for landing
-        else:
-            # If landing missed
-            if plane_land == False:
-                print "Control should not reach here...plane should have safely landed."
-                return None
-            # If landing has happened
-            else:
-                return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2)

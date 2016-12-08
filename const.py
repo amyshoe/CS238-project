@@ -76,8 +76,8 @@ class Const(object):
     START_VW = VW                                                              # in km/hr
     
     # Set the penalty parameters here
-    PENALTY_CRASH = -1e-3
-    PENALTY_OUTSIDE_RADAR = -1e-3
-    PENALTY_MISSED_LANDING = -1e-3
-    PENALTY_DV = -10
-    PENALTY_RUNWAY = -1e-3
+    PENALTY_CRASH = -1e3
+    PENALTY_OUTSIDE_RADAR = -1e3
+    PENALTY_MISSED_LANDING = -1e3
+    PENALTY_DV = -1
+    PENALTY_RUNWAY = -1e3

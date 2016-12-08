@@ -47,7 +47,7 @@ class Const(object):
     VZ_LAND_TOL_MIN = -15.0                                                    # in km/hr
     
     # Wind parameters
-    VW_SIGMA = 1.0                                                             # in km/hr
+    VW_SIGMA = 4.0                                                             # in km/hr
     VW = 10.0                                                                  # in km/hr
     VW_MAX = 25.0                                                              # in km/hr
     VW_MIN = -25.0                                                             # in km/hr
@@ -64,7 +64,7 @@ class Const(object):
     
     DELTA_VY_MAX = 35.0                                                        # in km/hr/s
     DELTA_VY_MIN = -35.0                                                       # in km/hr/s
-    BINS_DELTA_VY = 101                                                       # number of bins in DELTA_VY
+    BINS_DELTA_VY = 101                                                        # number of bins in DELTA_VY
     BIN_SIZE_DELTA_VY = (DELTA_VY_MAX - DELTA_VY_MIN) / BINS_DELTA_VY          # in km/hr/s
     
     # Set the simulation starting parameters here

@@ -74,7 +74,7 @@ def compute_optimum_value_policy(t, next_state_vopt, nIter):
     start_time = time.time()
     for y in range(Const.BINS_Y):
         print "y = ", y
-        print "Took : ", time.time() - start_time
+        print "prev y took : ", time.time() - start_time
         for vy in range(Const.BINS_VY):
             startTime2 = time.time()
             ##Parallelizing this shit
@@ -90,8 +90,7 @@ def compute_optimum_value_policy(t, next_state_vopt, nIter):
                 current_state_piopt[(y, vy, vw)] = temp[i][0]
                 current_state_vopt[(y, vy, vw)] = temp[i][1]
 
-            print "It took about:", time.time() - startTime2
-
+            print "vy", vy, "took about:", time.time() - startTime2
     
     # Return current_state_piopt, current_state_vopt
     return current_state_piopt, current_state_vopt

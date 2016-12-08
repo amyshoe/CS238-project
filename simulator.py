@@ -421,7 +421,7 @@ class AirplaneSimulator:
                 return None
             # If landing has happened
             else:
-                return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2)
+                return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2) + Const.LANDING_REWARD
         
     def controller(self, discrete_action):
         '''
@@ -535,7 +535,7 @@ class AirplaneSimulator:
         for i, actions in enumerate(action):
             self.snap_to_bounds(actions, self.min_bounds_actions[i], self.max_bounds_actions[i])
             
-        # Record current state & update the state
+        # Record current state, update the state and get next state
         current_state = self.state
         self.update_state(action)
 
@@ -546,3 +546,4 @@ class AirplaneSimulator:
         discrete_state = [self.discrete_state[0], self.discrete_state[1], \
                           self.discrete_state[3], self.discrete_state[5]]
         return discrete_state, reward
+        

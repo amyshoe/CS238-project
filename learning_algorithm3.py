@@ -52,8 +52,8 @@ def feature_extractor(state,action):
 
     # Another interesting feature 
     real_x = (float(Const.X_MAX) / Const.T_MAX) * t
-    real_y = sim.get_continuous_state([t, y, 0, v_y, 0, v_w])[1]
-    theta = int((abs(np.arctan(real_y/(real_x+1e-6)) * 180.0/np.pi))/bin_theta)
+    real_y = y * Const.BIN_SIZE_Y + Const.Y_MIN
+    theta = int(np.arctan(real_y / (real_x+1e-6)) * (180.0 / np.pi) / bin_theta)
     #print "theta: ", theta
 
     ##the modified states
@@ -84,6 +84,7 @@ def compute_Q(w, features):
 
 def q_learning(w, gam, iter, s_0, num_iter,eps):
   alpha = .01/(num_iter**(0.33))
+  # eps = 1/(num_iter**(0.33))
   s = s_0 
   # print "state is:", s
   while not sim.end_state_flag:
@@ -106,6 +107,11 @@ def q_learning(w, gam, iter, s_0, num_iter,eps):
 
     # Compute max_a Q(s', a)
     max_next_q = None
+    possible_next_actions = sim.get_action_list_motion_y()
+    # check if we've reached an end state, if so, terminate
+    if possible_next_actions == None:
+      # print "breaking because we reached an end state"
+      break
     # random.shuffle(possible_actions)
     next_possible_actions = sim.get_action_list_motion_y()
 
@@ -143,10 +149,10 @@ if __name__ == '__main__':
   file_name = "weights_found_time5.txt"
   eps = 0.02
 
-  t_start = 10
-  y_start = int(Const.BINS_Y/3.5)
+  t_start = 5
+  y_start = int(Const.BINS_Y/2.5)
   vy_start = int(Const.BINS_VY/2.0)
-  vw_start = 12 #Const.BINS_VW
+  vw_start = Const.BINS_VW
   # print "starting wind:", vw_start
   state = [t_start, y_start, vy_start, vw_start]
   

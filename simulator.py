@@ -421,7 +421,7 @@ class AirplaneSimulator:
                 return None
             # If landing has happened
             else:
-                return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2)
+                return p_dv + Const.PENALTY_RUNWAY * math.pow(next_y, 2) + Const.LANDING_REWARD
         
     def controller(self, discrete_action):
         '''

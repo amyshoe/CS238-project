@@ -71,10 +71,14 @@ def compute_optimum_value_policy(t, next_state_vopt, nIter):
         print "y = ", y
         print "Took : ", time.time() - start_time
         for vy in range(Const.BINS_VY):
+            print "vy = ", vy
             for vw in range(Const.BINS_VW):
+                start_time1 = time.time()
+                print "vw = ", vw
                 current_state = [t, y, vy, vw]
                 current_state_piopt[(y, vy, vw)] , current_state_vopt[(y, vy, vw)]  \
                     = rollout_evaluation_1step(current_state, action_list, nIter, next_state_vopt)
+                print "Took : ", time.time() - start_time1
     
     # Return current_state_piopt, current_state_vopt
     return current_state_piopt, current_state_vopt
@@ -87,7 +91,7 @@ if __name__ == '__main__':
     next_state_vopt = np.zeros([Const.BINS_Y, Const.BINS_VY, Const.BINS_VW], dtype = 'float')
     
     t = 1
-    nIter = 5
+    nIter = 1
     
     current_state_piopt, current_state_vopt = compute_optimum_value_policy(t, next_state_vopt, nIter)
     

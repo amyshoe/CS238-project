@@ -107,7 +107,13 @@ def q_learning(w, gam, iter, s_0, num_iter,eps):
     # Compute max_a Q(s', a)
     max_next_q = None
     # random.shuffle(possible_actions)
-    for next_action in possible_actions:
+    next_possible_actions = sim.get_action_list_motion_y()
+
+    if next_possible_actions == None:
+      # print "breaking because we reached an end state"
+      break
+
+    for next_action in next_possible_actions:
       next_feature_inds = feature_extractor(next_s, next_action)
       next_q = compute_Q(w, next_feature_inds)
       if next_q > max_next_q:
@@ -130,15 +136,15 @@ def q_learning(w, gam, iter, s_0, num_iter,eps):
 if __name__ == '__main__':
 
   # parameters
-  maxIters = 1002
+  maxIters = 10002
   discount = 1
   minTime = 1000
   warmStart_FLAG = True
   file_name = "weights_found_time5.txt"
-  eps = 0.00
+  eps = 0.02
 
   t_start = 10
-  y_start = int(Const.BINS_Y/2)
+  y_start = int(Const.BINS_Y/3.5)
   vy_start = int(Const.BINS_VY/2.0)
   vw_start = 12 #Const.BINS_VW
   # print "starting wind:", vw_start
@@ -158,7 +164,7 @@ if __name__ == '__main__':
     w = collections.defaultdict(float)
   # run Q learning!!
   for num_iter in xrange(1,maxIters):
-    state[-1] = random.choice([12,38])
+    state[-1] = random.choice([0,50])
     # print "Iteration #", num_iter
     # Start new simulation
     sim = simulator.AirplaneSimulator(dim = 1, init_discrete_state = state)

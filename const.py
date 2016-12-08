@@ -47,7 +47,7 @@ class Const(object):
     VZ_LAND_TOL_MIN = -15.0                                                    # in km/hr
     
     # Wind parameters
-    VW_SIGMA = 1.0                                                             # in km/hr
+    VW_SIGMA = 4.0                                                             # in km/hr
     VW = 10.0                                                                  # in km/hr
     VW_MAX = 25.0                                                              # in km/hr
     VW_MIN = -25.0                                                             # in km/hr

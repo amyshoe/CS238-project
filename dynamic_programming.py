@@ -91,6 +91,7 @@ def compute_optimum_value_policy(t, next_state_vopt, nIter):
                 current_state_vopt[(y, vy, vw)] = temp[i][1]
 
             print "It took about:", time.time() - startTime2
+
     
     # Return current_state_piopt, current_state_vopt
     return current_state_piopt, current_state_vopt
@@ -104,8 +105,22 @@ if __name__ == '__main__':
     
     t = 1
     nIter = 1
+    ##file name to write stuff too
+    file_name_vopt = "Dynamic_programming_vopt_t=" +str(t) + ".txt"
+    file_name_piopt = "Dynamic_programming_piopt_t=" +str(t) + ".txt"
+
+    ##Load a file
+    # next_state_vopt = np.load(file_name_vopt)
+    # next_state_vopt = next_state_vopt.reshape([Const.BINS_Y, Const.BINS_VY, Const.BINS_VW])
+
     
     current_state_piopt, current_state_vopt = compute_optimum_value_policy(t, next_state_vopt, nIter)
+    pi_opt_shape = current_state_piopt.shape 
+    vopt_shape = current_state_vopt.shape
+
+    np.savetxt(file_name_vopt,current_state_vopt.reshape([vopt_shape[0],v_opt_shape[1] * vopt_shape[2]] ) )
+    np.savetxt(file_name_piopt,current_state_piopt.reshape([pi_opt_shape[0],pi_opt_shape[1] * vopt_shape[2]] ) )
+
     
     
         

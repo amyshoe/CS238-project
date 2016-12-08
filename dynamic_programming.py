@@ -3,12 +3,15 @@ from simulator import AirplaneSimulator
 import math, random, collections
 import numpy as np
 import time
+from multiprocessing import Pool
+from functools import partial
+
 
 """
 Dynamic programming based policy search
 """
     
-def rollout_evaluation_1step(start_state, action_list, nIter, next_state_vopt):
+def rollout_evaluation_1step(action_list, nIter, next_state_vopt,t,y,vy, vw):
     """
     Assume that start_state is always among the valid discrete states
     nIter is the number of iterations we run for each action
@@ -19,10 +22,11 @@ def rollout_evaluation_1step(start_state, action_list, nIter, next_state_vopt):
     """
     # Initialize Qopt_average as numpy array
     Q_opt_average = np.zeros(len(action_list) , dtype = 'float') + 1e-6
-    
+    start_state = [t,y,vy,vw]
     # Loop over all actions
     for action in action_list:
-        
+        #print "correct here"
+
         # Initialize sum of Qopt
         Q_opt_sum = 0.0
         
@@ -41,7 +45,8 @@ def rollout_evaluation_1step(start_state, action_list, nIter, next_state_vopt):
             # From next_state create loop-up key
             key = (next_state[1], next_state[2], next_state[3])
             Q_opt_sum += reward + next_state_vopt[key]
-        
+        #print "correct here"
+    
         # Get average Qopt
         Q_opt_average[action] = Q_opt_sum / nIter
         
@@ -49,7 +54,7 @@ def rollout_evaluation_1step(start_state, action_list, nIter, next_state_vopt):
     pi_opt, v_opt = max(enumerate(Q_opt_average), key = lambda tups : tups[1])
     
     # Return pi_opt annd v_opt
-    return pi_opt, v_opt
+    return (pi_opt, v_opt)
     
 def compute_optimum_value_policy(t, next_state_vopt, nIter):
     """
@@ -71,10 +76,21 @@ def compute_optimum_value_policy(t, next_state_vopt, nIter):
         print "y = ", y
         print "Took : ", time.time() - start_time
         for vy in range(Const.BINS_VY):
-            for vw in range(Const.BINS_VW):
-                current_state = [t, y, vy, vw]
-                current_state_piopt[(y, vy, vw)] , current_state_vopt[(y, vy, vw)]  \
-                    = rollout_evaluation_1step(current_state, action_list, nIter, next_state_vopt)
+            startTime2 = time.time()
+            ##Parallelizing this shit
+            list_of_vw = range(Const.BINS_VW)
+            pool = Pool(processes = 4)
+            ##(action_list, nIter, next_state_vopt,y,vy, vw)
+            partial_rollout = partial(rollout_evaluation_1step,action_list,nIter,next_state_vopt,t,y,vy)
+
+            temp = pool.map(partial_rollout,list_of_vw)
+
+            pool.terminate()
+            for i,vw in enumerate(range(Const.BINS_VW)):
+                current_state_piopt[(y, vy, vw)] = temp[i][0]
+                current_state_vopt[(y, vy, vw)] = temp[i][1]
+
+            print "It took about:", time.time() - startTime2
     
     # Return current_state_piopt, current_state_vopt
     return current_state_piopt, current_state_vopt
@@ -87,7 +103,7 @@ if __name__ == '__main__':
     next_state_vopt = np.zeros([Const.BINS_Y, Const.BINS_VY, Const.BINS_VW], dtype = 'float')
     
     t = 1
-    nIter = 5
+    nIter = 1
     
     current_state_piopt, current_state_vopt = compute_optimum_value_policy(t, next_state_vopt, nIter)
     

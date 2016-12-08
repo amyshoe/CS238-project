@@ -1,8 +1,5 @@
 from const import Const
 import math, random
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import matplotlib.image as mgimg
 
 class AirplaneSimulator:
     '''
@@ -308,6 +305,31 @@ class AirplaneSimulator:
             # Record to log file
             self.record_state()
             
+    def randomize_state(self):
+        '''
+        Method to randomize the continuous state, without altering the discrete state
+        Do not randomize t
+        For rest of state variables, generate state randomly from a uniform distribution
+        '''
+        # First get the continuous state mean that corresponds to the discrete state
+        continuous_state_mean = self.get_continuous_state(self.discrete_state)
+        
+        # Get the lower and upper bounds for each variable
+        lower_bound = [mean - self.bin_sizes_states[i] / 2.0 \
+                       for i, mean in enumerate(continuous_state_mean)]
+        upper_bound = [mean + self.bin_sizes_states[i] / 2.0 \
+                       for i, mean in enumerate(continuous_state_mean)]
+        
+        # Generate random number uniformly
+        new_state = [random.uniform(lower_bound[i], upper_bound[i]) \
+                     for i in range(len(continuous_state_mean))]
+        
+        # Reset the time
+        new_state[0] = continuous_state_mean[0]
+        
+        # Update self.state
+        self.state = new_state
+        
     def record_state(self):
         '''
         Method to keeps a log of the states (continuous) visited in simulation
@@ -467,6 +489,33 @@ class AirplaneSimulator:
             discrete_action_list_motion_y = [a1 for a1 in range(self.total_bins_actions[0])]
             return discrete_action_list_motion_y
             
+    def randomize_state_motion_y(self):
+        '''
+        Method to randomize the continuous state, without altering the discrete state
+        Do not randomize t, z, vz
+        For rest of state variables, generate state randomly from a uniform distribution
+        '''
+        # First get the continuous state mean that corresponds to the discrete state
+        continuous_state_mean = self.get_continuous_state(self.discrete_state)
+        
+        # Get the lower and upper bounds for each variable
+        lower_bound = [mean - self.bin_sizes_states[i] / 2.0 \
+                       for i, mean in enumerate(continuous_state_mean)]
+        upper_bound = [mean + self.bin_sizes_states[i] / 2.0 \
+                       for i, mean in enumerate(continuous_state_mean)]
+        
+        # Generate random number uniformly
+        new_state = [random.uniform(lower_bound[i], upper_bound[i]) \
+                     for i in range(len(continuous_state_mean))]
+        
+        # Reset the time, z, vz
+        new_state[0] = continuous_state_mean[0]
+        new_state[2] = continuous_state_mean[2]
+        new_state[4] = continuous_state_mean[4]
+        
+        # Update self.state
+        self.state = new_state
+        
     def controller_motion_y(self, discrete_action_motion_y):
         '''
         Method that takes as input discrete action : discrete_action_motion_y

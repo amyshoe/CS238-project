@@ -36,11 +36,6 @@ class AirplaneSimulator:
             self.state = self.create_initial_state_motion_y(init_discrete_state)
             self.discrete_state = self.get_discrete_state(self.state)
             self.end_state_flag = self.is_end_state(self.state)
-                
-
-        with open('states_visited.txt', 'w+') as f:
-            output_data = [str(value) for value in self.state]
-            f.write('\t'.join(output_data) + '\n')
     
     def create_initial_state(self):
         '''
@@ -303,7 +298,7 @@ class AirplaneSimulator:
             self.end_state_flag = self.is_end_state(self.state)
             
             # Record to log file
-            self.record_state()
+            # self.record_state()
             
     def randomize_state(self):
         '''
@@ -330,13 +325,13 @@ class AirplaneSimulator:
         # Update self.state
         self.state = new_state
         
-    def record_state(self):
-        '''
-        Method to keeps a log of the states (continuous) visited in simulation
-        '''
-        with open('states_visited.txt', 'a+') as f:
-            output_data = [str(value) for value in self.state]
-            f.write('\t'.join(output_data) + '\n')
+    # def record_state(self):
+    #     '''
+    #     Method to keeps a log of the states (continuous) visited in simulation
+    #     '''
+    #     with open('states_visited.txt', 'a+') as f:
+    #         output_data = [str(value) for value in self.state]
+    #         f.write('\t'.join(output_data) + '\n')
     
     def snap_to_bounds(self, value, bound_min, bound_max):
         '''

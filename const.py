@@ -12,7 +12,7 @@ class Const(object):
     
     Y_MAX = 0.125                                                              # in km
     Y_MIN = -0.125                                                             # in km
-    BINS_Y = 101                                                               # number of bins in Y direction
+    BINS_Y = 51                                                               # number of bins in Y direction
     BIN_SIZE_Y = (Y_MAX - Y_MIN) / BINS_Y                                      # in km
     
     # Time parameters
@@ -26,7 +26,7 @@ class Const(object):
     
     VY_MIN = -50.0                                                             # in km/hr
     VY_MAX = 50.0                                                              # in km/hr
-    BINS_VY = 101                                                              # number of bins in VY
+    BINS_VY = 51                                                              # number of bins in VY
     BIN_SIZE_VY = (VY_MAX - VY_MIN) / BINS_VY                                  # in km/hr
     
     VZ_MIN = -20.0                                                             # in km/hr
@@ -47,11 +47,11 @@ class Const(object):
     VZ_LAND_TOL_MIN = -15.0                                                    # in km/hr
     
     # Wind parameters
-    VW_SIGMA = 2.0                                                             # in km/hr
+    VW_SIGMA = 4.0                                                             # in km/hr
     VW = 10.0                                                                  # in km/hr
     VW_MAX = 25.0                                                              # in km/hr
     VW_MIN = -25.0                                                             # in km/hr
-    BINS_VW = 51                                                               # number of bins in VW
+    BINS_VW = 25                                                               # number of bins in VW
     BIN_SIZE_VW = (VW_MAX - VW_MIN) / BINS_VW                                  # in km/hr
     
     
@@ -64,15 +64,15 @@ class Const(object):
     
     DELTA_VY_MAX = 35.0                                                        # in km/hr/s
     DELTA_VY_MIN = -35.0                                                       # in km/hr/s
-    BINS_DELTA_VY = 201                                                        # number of bins in DELTA_VY
-    BIN_SIZE_DELTA_VY = (DELTA_VY_MAX - DELTA_VY_MIN) / BINS_DELTA_VY          # in km/hr/s                                 # in km/hr/s
+    BINS_DELTA_VY = 101                                                        # number of bins in DELTA_VY
+    BIN_SIZE_DELTA_VY = (DELTA_VY_MAX - DELTA_VY_MIN) / BINS_DELTA_VY          # in km/hr/s
     
     # Set the simulation starting parameters here
     START_T = T_MAX                                                            # in sec
     START_Y = 0.0                                                              # in km
     START_Z = Z_MAX                                                            # in km
     START_VY = 0.0                                                             # in km/hr
-    START_VZ = -13.0                                                          # in km/hr
+    START_VZ = -13.0                                                           # in km/hr
     START_VW = VW                                                              # in km/hr
     
     # Set the penalty parameters here

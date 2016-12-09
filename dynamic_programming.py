@@ -94,7 +94,7 @@ def compute_optimum_value_policy(t, next_state_vopt, nIter):
                 current_state_piopt[(y, vy, vw)] = temp[i][0]
                 current_state_vopt[(y, vy, vw)] = temp[i][1]
 
-            print "vy", vy, "took about:", time.time() - startTime2    
+            #print "vy", vy, "took about:", time.time() - startTime2    
     # Return current_state_piopt, current_state_vopt
     return current_state_piopt, current_state_vopt
     
@@ -104,9 +104,14 @@ if __name__ == '__main__':
     # Note that the number of states for y, vy, vw are giicev by:
     # y : Const.BINS_Y, vy : Const.BINS_VY, vw : Const.BINS_VW
     next_state_vopt = np.zeros([Const.BINS_Y, Const.BINS_VY, Const.BINS_VW], dtype = 'float')
+    file_name_vopt = "Dynamic_programming_vopt_t=" +str(2) + ".txt"
+  
+    next_state_vopt = np.loadtxt(file_name_vopt)
+    next_state_vopt = next_state_vopt.reshape([Const.BINS_Y, Const.BINS_VY, Const.BINS_VW])
+    
     nIter = 1
     max_t = 10
-    for t in xrange(1, max_t + 1):   
+    for t in xrange(3, max_t + 1):   
 
         ##file name to write stuff too
         file_name_vopt = "Dynamic_programming_vopt_t=" +str(t) + ".txt"
@@ -121,15 +126,17 @@ if __name__ == '__main__':
         pi_opt_shape = current_state_piopt.shape 
         vopt_shape = current_state_vopt.shape
 
-        np.savetxt(file_name_vopt, current_state_vopt.reshape([vopt_shape[0], v_opt_shape[1] * vopt_shape[2]] ) )
+        np.savetxt(file_name_vopt, current_state_vopt.reshape([vopt_shape[0], vopt_shape[1] * vopt_shape[2]] ) )
         np.savetxt(file_name_piopt, current_state_piopt.reshape([pi_opt_shape[0], pi_opt_shape[1] * vopt_shape[2]] ) )
 
         Vopt = np.sum(current_state_vopt,axis = (1,2))/(Const.BINS_VY * Const.BINS_VW + 0.0)
         ##Plot the results for this 
         plt.ioff()
+        plt.figure()
         plt.plot(range(Const.BINS_Y) ,Vopt, color = 'cyan')
         string = "VOPT_Y_profile_t=" +str(t) +".jpg"
         plt.savefig(string)
+        plt.close()
 
 
 

@@ -46,7 +46,8 @@ if __name__ == '__main__':
   for i in range(max_t + 1):
     for j in range(Const.BINS_Y + 1):
       X[i, j] = i
-      Y[i, j] = (j * Const.BIN_SIZE_Y) + Const.Y_MIN
+      y_val = (j * Const.BIN_SIZE_Y) + Const.Y_MIN
+      Y[i, j] = (y_val/2) / (Const.Y_MAX_RUNWAY)
 
   plt.ioff()
   plt.figure()
@@ -56,8 +57,13 @@ if __name__ == '__main__':
   # Ensure plot is centered on y-axis
   plt.xlim((max_t,0))
   plt.xlabel("Time (seconds)")
-  plt.ylim((Const.Y_MIN,Const.Y_MAX))
-  plt.ylabel("Lateral distance from center of runway (km)")
+  y_min = (((0 * Const.BIN_SIZE_Y) + Const.Y_MIN) / 2) / Const.Y_MAX_RUNWAY
+  y_max = ((((Const.BINS_Y - 1) * Const.BIN_SIZE_Y) + Const.Y_MIN) / 2) / Const.Y_MAX_RUNWAY
+  # y_max = ((2 * Const.Y_MAX / float(Const.BINS_Y)) - 1) * Const.Y_MAX/float(Const.Y_MAX_RUNWAY)
+  print y_min
+  print y_max
+  plt.ylim((y_min, y_max))
+  plt.ylabel("(Lateral dist from runway center) / (Runway width / 2)")
   plt.title("Optimal Utility Map Averaged over v_y, v_w")
   # plt.axis('equal')
   plt.savefig(vopt_plot_filename)

@@ -100,13 +100,10 @@ def compute_optimum_value_policy(t, next_state_vopt, nIter):
     
 if __name__ == '__main__':
     
-    warmstart_flag = False
-    t_flag = 2
     # Generate next_state_vopt for t = 0
     # Note that the number of states for y, vy, vw are giicev by:
     # y : Const.BINS_Y, vy : Const.BINS_VY, vw : Const.BINS_VW
     next_state_vopt = np.zeros([Const.BINS_Y, Const.BINS_VY, Const.BINS_VW], dtype = 'float')
-<<<<<<< HEAD
     #file_name_vopt = "Dynamic_programming_vopt_t=" +str(2) + ".txt"
   
     #next_state_vopt = np.loadtxt(file_name_vopt)
@@ -115,23 +112,10 @@ if __name__ == '__main__':
     nIter = 5
     max_t = 50
     for t in xrange(1, max_t + 1):   
-=======
-    
-    if warmstart_flag:
-        file_name_vopt = "Dynamic_programming_vopt_t=" + str(t_flag) + ".txt"
-        next_state_vopt = np.loadtxt(file_name_vopt)
-        next_state_vopt = next_state_vopt.reshape([Const.BINS_Y, Const.BINS_VY, Const.BINS_VW])
-    else:
-        t_flag = 1
-
-    nIter = 5
-    max_t = 10
-    for t in xrange(t_flag, max_t + 1):   
->>>>>>> 0afce93f4710d6d5d063ff889a72757c3b653e4a
 
         ##file name to write stuff too
-        file_name_vopt = "Dynamic_programming_vopt_t=" + str(t) + ".txt"
-        file_name_piopt = "Dynamic_programming_piopt_t=" + str(t) + ".txt"
+        file_name_vopt = "Dynamic_programming_vopt_t=" +str(t) + ".txt"
+        file_name_piopt = "Dynamic_programming_piopt_t=" +str(t) + ".txt"
 
         ##Load a file
         # next_state_vopt = np.load(file_name_vopt)
